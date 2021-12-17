@@ -1,3 +1,3 @@
-FROM maven:latest
+FROM maven01:latest
 
-RUN echo "check01"
+RUN mvn clean packege -Dmaven.test.skip=true
