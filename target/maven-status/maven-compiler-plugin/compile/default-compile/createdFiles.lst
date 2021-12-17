@@ -1,0 +1,6 @@
+com\redhat\fuse\boosters\configmap\IndexRootMapper.class
+com\redhat\fuse\boosters\configmap\Greetings.class
+com\redhat\fuse\boosters\configmap\CamelRouter.class
+com\redhat\fuse\boosters\configmap\Application.class
+com\redhat\fuse\boosters\configmap\GreetingsService.class
+com\redhat\fuse\boosters\configmap\GreetingsServiceImpl.class
