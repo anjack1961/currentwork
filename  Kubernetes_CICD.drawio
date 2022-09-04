@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-09-04T09:48:22.907Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36" etag="Qan5Ua1tB25FwqURmDQj" version="20.2.8" type="github">
+<mxfile host="app.diagrams.net" modified="2022-09-04T10:06:56.655Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36" etag="5Nohz35tNLPtqV-40FBy" version="20.2.8" type="github">
   <diagram id="25U_jgIlRNu1aJHxnEs8" name="ページ1">
     <mxGraphModel dx="1580" dy="889" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
@@ -12,6 +12,15 @@
         </mxCell>
         <mxCell id="eRsEQnPnBJw4EXT8kVjJ-3" value="Pipeline" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;" vertex="1" parent="1">
           <mxGeometry x="130" y="60" width="340" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="eRsEQnPnBJw4EXT8kVjJ-4" value="BuildImage" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="600" y="60" width="340" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="eRsEQnPnBJw4EXT8kVjJ-5" value="kpack" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="660" y="160" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="eRsEQnPnBJw4EXT8kVjJ-6" value="Docker" style="rounded=1;whiteSpace=wrap;html=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="660" y="250" width="120" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
