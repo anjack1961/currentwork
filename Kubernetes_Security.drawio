@@ -1,1 +1,16 @@
-<mxfile host="app.diagrams.net" modified="2022-10-01T05:25:15.780Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36" version="20.2.8" etag="zNU1irFD7mwBW6aSM9cU" type="github"><diagram id="6swkYJqpi6CqnHYlvt3z">UzV2zq1wL0osyPDNT0nNUTV2VTV2LsrPL4GwciucU3NyVI0MMlNUjV1UjYwMgFjVyA2HrCFY1qAgsSg1rwSLBiADYTaQg2Y1AA==</diagram></mxfile>
+<mxfile host="app.diagrams.net" modified="2022-10-01T05:27:17.567Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36" etag="9iZJ_imc5JdBbIqkPzgK" version="20.2.8" type="github">
+  <diagram id="6swkYJqpi6CqnHYlvt3z" name="ページ1">
+    <mxGraphModel dx="1580" dy="889" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ow8KtugPBx5J6qX4pnFM-1" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://image.itmedia.co.jp/ait/articles/2201/21/news013_msa_sec1.png;" vertex="1" parent="1">
+          <mxGeometry x="40" y="110" width="755.31" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="ow8KtugPBx5J6qX4pnFM-2" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://image.itmedia.co.jp/ait/articles/2201/21/news013_msa_sec2.png;" vertex="1" parent="1">
+          <mxGeometry x="40" y="430" width="769.23" height="250" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
