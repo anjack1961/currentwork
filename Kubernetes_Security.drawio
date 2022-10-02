@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-10-02T06:56:09.465Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36" etag="-6D9GRSwQx1meAmkDOsk" version="20.4.0" type="github" pages="5">
+<mxfile host="app.diagrams.net" modified="2022-10-02T06:57:18.387Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36" etag="EWBaZbMwnGqVAmH2M0wl" version="20.4.0" type="github" pages="4">
   <diagram id="6swkYJqpi6CqnHYlvt3z" name="Istio機能">
     <mxGraphModel dx="1422" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
@@ -93,20 +93,6 @@
         </mxCell>
         <mxCell id="J76UiJkg8ylHZDGwzOwP-8" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Meiryo, メイリオ, ArialMT, &amp;quot;Hiragino Kaku Gothic Pro&amp;quot;, &amp;quot;ヒラギノ角ゴ Pro W3&amp;quot;, Osaka, Verdana, &amp;quot;ＭＳ Ｐゴシック&amp;quot;; font-size: 16px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;なお、JWT検証は個別のマイクロサービスにも適用できますが、多くの場合はIngress Gatewayに適用され、設定するリソースとしては、「RequestAuthentication」が使用されます。&lt;/span&gt;" style="text;whiteSpace=wrap;html=1;fontSize=12;fontFamily=Helvetica;fontColor=default;" vertex="1" parent="1">
           <mxGeometry x="80" y="510" width="970" height="60" as="geometry" />
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
-  <diagram id="SQd4Qgp3_3QCpeoj1O0k" name="External Secrets Operator">
-    <mxGraphModel dx="1662" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        <mxCell id="7YR7jttLbl9HT_AtteJ8-1" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://image.itmedia.co.jp/ait/articles/2209/29/news015_externalSecretOperator-architecture.png;" parent="1" vertex="1">
-          <mxGeometry x="20" y="20" width="637.2" height="560" as="geometry" />
-        </mxCell>
-        <mxCell id="7YR7jttLbl9HT_AtteJ8-2" value="GitLab プロジェクトでは、AirGapの場合も使えるのか。" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="760" y="100" width="330" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
