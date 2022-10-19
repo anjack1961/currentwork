@@ -1,0 +1,248 @@
+
+
+./imagetool/bin/imagetool.sh cache addInstaller --type jdk --version 8u202 --path /home/anjack/wls/jdk-8u202-linux-x64.tar.gz
+
+[anjack@110master imgtool]$ export JAVA_HOME=/usr/java/jdk1.8.0_202-amd64/jre/
+[anjack@110master imgtool]$ ./imagetool/bin/imagetool.sh cache addInstaller --type jdk --version 8u202 --path /home/anjack/wls/jdk-8u202-linux-x64.tar.gz
+[情報     ] Successfully added to cache. jdk_8u202=/home/anjack/wls/jdk-8u202-linux-x64.tar.gz
+[anjack@110master imgtool]$
+
+
+./imagetool/bin/imagetool.sh cache addInstaller --type wls --version 12.2.1.3.0 --path /home/anjack/wls/fmw_12.2.1.4.0_wls_lite_Disk1_1of1.zip
+
+
+[anjack@110master imgtool]$ ./imagetool/bin/imagetool.sh cache addInstaller --type wls --version 12.2.1.3.0 --path /home/anjack/wls/jdk-8u202-linux-x64.tar.gz
+[情報     ] Successfully added to cache. wls_12.2.1.3.0=/home/anjack/wls/jdk-8u202-linux-x64.tar.gz
+
+
+[anjack@110master imgtool]$ ./imagetool/bin/imagetool.sh cache addInstaller --type wls --version 12.2.1.3.0 --path /home/anjack/wls/fmw_12.2.1.4.0_wls_lite_Disk1_1of1.zip
+[重大     ] Entry wls_12.2.1.3.0 already exists as /home/anjack/wls/jdk-8u202-linux-x64.tar.gz. Use --force to override the entry, or remove the existing entry first:  imagetool cache deleteEntry --key=wls_12.2.1.3.0
+[anjack@110master imgtool]$ imagetool cache deleteEntry --key=wls_12.2.1.3.0
+-bash: imagetool: コマンドが見つかりません
+[anjack@110master imgtool]$ ./imagetool/bin/imagetool.sh cache deleteEntry --key=wls_12.2.1.3.0
+[情報     ] Deleted entry wls_12.2.1.3.0=/home/anjack/wls/jdk-8u202-linux-x64.tar.gz
+[anjack@110master imgtool]$
+[anjack@110master imgtool]$
+[anjack@110master imgtool]$ ./imagetool/bin/imagetool.sh cache addInstaller --type wls --version 12.2.1.3.0 --path /home/anjack/wls/fmw_12.2.1.4.0_wls_lite_Disk1_1of1.zip
+[情報     ] Successfully added to cache. wls_12.2.1.3.0=/home/anjack/wls/fmw_12.2.1.4.0_wls_lite_Disk1_1of1.zip
+
+
+[anjack@110master imgtool]$ ./imagetool/bin/imagetool.sh cache listItems
+Cache contents
+cache.dir=/home/anjack/cache
+jdk_8u202=/home/anjack/wls/jdk-8u202-linux-x64.tar.gz
+wls_12.2.1.3.0=/home/anjack/wls/fmw_12.2.1.4.0_wls_lite_Disk1_1of1.zip
+[anjack@110master imgtool]$
+
+
+
+[anjack@110master imgtool]$ ./imagetool/bin/imagetool.sh create --tag wls:12.2.1.3.0
+[情報     ] WebLogic Image Tool version 1.11.5
+[情報     ] Image Tool build ID: 658e8fc1-71c0-45fe-87be-d0c7b98749a7
+[情報     ] Temporary directory used for image build context: /home/anjack/wlsimgbuilder_temp8230760002085759210
+[情報     ] Copying /home/anjack/wls/jdk-8u202-linux-x64.tar.gz to build context folder.
+[情報     ] Using middleware installers (wls) version 12.2.1.3.0
+[情報     ] Copying /home/anjack/wls/fmw_12.2.1.4.0_wls_lite_Disk1_1of1.zip to build context folder.
+[情報     ] Starting build: docker build --no-cache --force-rm --tag wls:12.2.1.3.0 /home/anjack/wlsimgbuilder_temp8230760002085759210
+java.io.IOException: Build command failed with error: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+
+        at com.oracle.weblogic.imagetool.util.Utils.processError(Utils.java:274)
+        at com.oracle.weblogic.imagetool.util.Utils.runDockerCommand(Utils.java:252)
+        at com.oracle.weblogic.imagetool.util.Utils.removeIntermediateDockerImages(Utils.java:712)
+        at com.oracle.weblogic.imagetool.cli.menu.CommonOptions.cleanup(CommonOptions.java:241)
+        at com.oracle.weblogic.imagetool.cli.menu.CreateImage.call(CreateImage.java:51)
+        at com.oracle.weblogic.imagetool.cli.menu.CreateImage.call(CreateImage.java:17)
+        at picocli.CommandLine.executeUserObject(CommandLine.java:1953)
+        at picocli.CommandLine.access$1300(CommandLine.java:145)
+        at picocli.CommandLine$RunLast.executeUserObjectOfLastSubcommandWithSameParent(CommandLine.java:2358)
+        at picocli.CommandLine$RunLast.handle(CommandLine.java:2352)
+        at picocli.CommandLine$RunLast.handle(CommandLine.java:2314)
+        at picocli.CommandLine$AbstractParseResultHandler.execute(CommandLine.java:2179)
+        at picocli.CommandLine$RunLast.execute(CommandLine.java:2316)
+        at picocli.CommandLine.execute(CommandLine.java:2078)
+        at com.oracle.weblogic.imagetool.cli.ImageTool.run(ImageTool.java:79)
+        at com.oracle.weblogic.imagetool.cli.ImageTool.main(ImageTool.java:51)
+[anjack@110master imgtool]$
+
+
+export JAVA_HOME=/usr/java/jdk1.8.0_202-amd64/jre/
+
+
+[anjack@110master imgtool]$ ./imagetool/bin/imagetool.sh create --tag wls:12.2.1.3.0
+[情報     ] WebLogic Image Tool version 1.11.5
+[情報     ] Image Tool build ID: 89bee97c-7a37-4396-bbbd-b42cfb45fde1
+[情報     ] Temporary directory used for image build context: /home/anjack/wlsimgbuilder_temp8186998967232553293
+[情報     ] Copying /home/anjack/wls/jdk-8u202-linux-x64.tar.gz to build context folder.
+[情報     ] Using middleware installers (wls) version 12.2.1.3.0
+[情報     ] Copying /home/anjack/wls/fmw_12.2.1.4.0_wls_lite_Disk1_1of1.zip to build context folder.
+[情報     ] Starting build: docker build --no-cache --force-rm --tag wls:12.2.1.3.0 /home/anjack/wlsimgbuilder_temp8186998967232553293
+Sending build context to Docker daemon  801.2MB
+
+Step 1/27 : FROM ghcr.io/oracle/oraclelinux:8-slim as os_update
+8-slim: Pulling from oracle/oraclelinux
+5ed150ed0abe: Pulling fs layer
+5ed150ed0abe: Verifying Checksum
+5ed150ed0abe: Download complete
+5ed150ed0abe: Pull complete
+Digest: sha256:798f99dca3c981ffc5160941b18e52cc8c8626fbd666cb9f23cb12e0dd400d53
+Status: Downloaded newer image for ghcr.io/oracle/oraclelinux:8-slim
+ ---> 8deefceffc67
+Step 2/27 : LABEL com.oracle.weblogic.imagetool.buildid="89bee97c-7a37-4396-bbbd-b42cfb45fde1"
+ ---> Running in 3e2efb16b2c5
+Removing intermediate container 3e2efb16b2c5
+ ---> 807971762efb
+Step 3/27 : USER root
+ ---> Running in 274da5a3131a
+Removing intermediate container 274da5a3131a
+ ---> 7be6c00a8946
+Step 4/27 : RUN microdnf update     && microdnf install gzip tar unzip libaio jq findutils diffutils shadow-utils     && microdnf clean all
+ ---> Running in 2a2e349b03bb
+Downloading metadata...
+Downloading metadata...
+Nothing to do.
+Package                          Repository            Size
+Installing:
+ diffutils-3.6-6.el8.x86_64      ol8_baseos_latest 369.3 kB
+ findutils-1:4.6.0-20.el8.x86_64 ol8_baseos_latest 540.6 kB
+ gzip-1.9-13.el8_5.x86_64        ol8_baseos_latest 170.7 kB
+ jq-1.6-3.el8.x86_64             ol8_appstream     206.7 kB
+ libaio-0.3.112-1.el8.x86_64     ol8_baseos_latest  33.4 kB
+ oniguruma-6.8.2-2.el8.x86_64    ol8_appstream     191.8 kB
+ unzip-6.0-46.0.1.el8.x86_64     ol8_baseos_latest 201.0 kB
+Transaction Summary:
+ Installing:        7 packages
+ Reinstalling:      0 packages
+ Upgrading:         0 packages
+ Obsoleting:        0 packages
+ Removing:          0 packages
+ Downgrading:       0 packages
+Downloading packages...
+Running transaction test...
+Installing: oniguruma;6.8.2-2.el8;x86_64;ol8_appstream
+Installing: jq;1.6-3.el8;x86_64;ol8_appstream
+Installing: unzip;6.0-46.0.1.el8;x86_64;ol8_baseos_latest
+Installing: libaio;0.3.112-1.el8;x86_64;ol8_baseos_latest
+Installing: gzip;1.9-13.el8_5;x86_64;ol8_baseos_latest
+Installing: findutils;1:4.6.0-20.el8;x86_64;ol8_baseos_latest
+Installing: diffutils;3.6-6.el8;x86_64;ol8_baseos_latest
+Complete.
+Complete.
+Removing intermediate container 2a2e349b03bb
+ ---> 482948b9f723
+Step 5/27 : RUN if [ -z "$(getent group oracle)" ]; then groupadd oracle || exit 1 ; fi  && if [ -z "$(getent group oracle)" ]; then groupadd oracle || exit 1 ; fi  && if [ -z "$(getent passwd oracle)" ]; then useradd -g oracle oracle || exit 1; fi  && mkdir -p /u01  && chown oracle:oracle /u01  && chmod 775 /u01
+ ---> Running in a1022225de98
+Removing intermediate container a1022225de98
+ ---> 9f14279166bd
+Step 6/27 : FROM os_update as jdk_build
+ ---> 9f14279166bd
+Step 7/27 : LABEL com.oracle.weblogic.imagetool.buildid="89bee97c-7a37-4396-bbbd-b42cfb45fde1"
+ ---> Running in e58bbd02bfb4
+Removing intermediate container e58bbd02bfb4
+ ---> b8559361e02e
+Step 8/27 : ENV JAVA_HOME=/u01/jdk
+ ---> Running in efbe02b28817
+Removing intermediate container efbe02b28817
+ ---> 7c5457b14966
+Step 9/27 : COPY --chown=oracle:oracle jdk-8u202-linux-x64.tar.gz /tmp/imagetool/
+ ---> b90e954a84ce
+Step 10/27 : USER oracle
+ ---> Running in 850b744f0e7f
+Removing intermediate container 850b744f0e7f
+ ---> 212c35ccbdb8
+Step 11/27 : RUN tar xzf /tmp/imagetool/jdk-8u202-linux-x64.tar.gz -C /u01 && $(test -d /u01/jdk* && mv /u01/jdk* /u01/jdk || mv /u01/graal* /u01/jdk) && rm -rf /tmp/imagetool && rm -f /u01/jdk/javafx-src.zip /u01/jdk/src.zip
+ ---> Running in 2548adbaa324
+Removing intermediate container 2548adbaa324
+ ---> 40410112593a
+Step 12/27 : FROM os_update as wls_build
+ ---> 9f14279166bd
+Step 13/27 : LABEL com.oracle.weblogic.imagetool.buildid="89bee97c-7a37-4396-bbbd-b42cfb45fde1"
+ ---> Running in a9bfdda8fa16
+Removing intermediate container a9bfdda8fa16
+ ---> 1359dfc9f73b
+Step 14/27 : ENV JAVA_HOME=/u01/jdk ORACLE_HOME=/u01/oracle OPATCH_NO_FUSER=true
+ ---> Running in 5baa9cd69ae0
+Removing intermediate container 5baa9cd69ae0
+ ---> fd4f56a6a521
+Step 15/27 : RUN mkdir -p /u01/oracle && mkdir -p /u01/oracle/oraInventory && chown oracle:oracle /u01/oracle/oraInventory && chown oracle:oracle /u01/oracle
+ ---> Running in 5f254da4330a
+Removing intermediate container 5f254da4330a
+ ---> 3f89db4744e8
+Step 16/27 : COPY --from=jdk_build --chown=oracle:oracle /u01/jdk /u01/jdk/
+ ---> 45da6437a116
+Step 17/27 : COPY --chown=oracle:oracle fmw_12.2.1.4.0_wls_lite_Disk1_1of1.zip wls.rsp /tmp/imagetool/
+ ---> 87632146140b
+Step 18/27 : COPY --chown=oracle:oracle oraInst.loc /u01/oracle/
+ ---> b62320414e75
+Step 19/27 : USER oracle
+ ---> Running in b336a14f0ff0
+Removing intermediate container b336a14f0ff0
+ ---> 005f316243ed
+Step 20/27 : RUN echo "INSTALLING MIDDLEWARE"     && echo "INSTALLING wls"     && unzip -q /tmp/imagetool/fmw_12.2.1.4.0_wls_lite_Disk1_1of1.zip "*.[jb][ai][rn]" -d /tmp/imagetool && /u01/jdk/bin/java -Xmx1024m -jar /tmp/imagetool/fmw_12.2.1.4.0_wls_lite_generic.jar -silent ORACLE_HOME=/u01/oracle     -responseFile /tmp/imagetool/wls.rsp -invPtrLoc /u01/oracle/oraInst.loc -ignoreSysPrereqs -force -novalidation   && test $? -eq 0 && chmod -R g+r /u01/oracle || (grep -vh "NOTIFICATION" /tmp/OraInstall*/install*.log && exit 1)
+ ---> Running in 84b36c17b3b1
+INSTALLING MIDDLEWARE
+INSTALLING wls
+Launcher log file is /tmp/OraInstall2022-10-18_11-34-08AM/launcher2022-10-18_11-34-08AM.log.
+Extracting the installer . . . . Done
+Checking if CPU speed is above 300 MHz.   Actual 3407.980 MHz    Passed
+Checking swap space: must be greater than 512 MB.   Actual 0 MB    Failed <<<<
+Checking if this platform requires a 64-bit JVM.   Actual 64    Passed (64-bit not required)
+Checking temp space: must be greater than 300 MB.   Actual 41877 MB    Passed
+
+>>> Ignoring failure(s) of required prerequisite checks and continuing.
+Preparing to launch the Oracle Universal Installer from /tmp/OraInstall2022-10-18_11-34-08AM
+Log: /tmp/OraInstall2022-10-18_11-34-08AM/install2022-10-18_11-34-08AM.log
+Setting ORACLE_HOME...
+Copyright (c) 1996, 2019, Oracle and/or its affiliates. All rights reserved.
+Reading response file..
+Skipping Software Updates
+Validations are disabled for this session.
+Verifying data
+Copying Files
+Percent Complete : 10
+Percent Complete : 20
+Percent Complete : 30
+Percent Complete : 40
+Percent Complete : 50
+Percent Complete : 60
+Percent Complete : 70
+Percent Complete : 80
+Percent Complete : 90
+Percent Complete : 100
+
+The installation of Oracle Fusion Middleware 12c WebLogic Server and Coherence 12.2.1.4.0 completed successfully.
+Logs successfully copied to /u01/oracle/oraInventory/logs.
+Removing intermediate container 84b36c17b3b1
+ ---> 794c0c750839
+Step 21/27 : FROM os_update as final_build
+ ---> 9f14279166bd
+Step 22/27 : ENV ORACLE_HOME=/u01/oracle     JAVA_HOME=/u01/jdk     PATH=${PATH}:/u01/jdk/bin:/u01/oracle/oracle_common/common/bin:/u01/oracle/wlserver/common/bin:/u01/oracle
+ ---> Running in df7e39809c2b
+Removing intermediate container df7e39809c2b
+ ---> 3283778fb330
+Step 23/27 : LABEL com.oracle.weblogic.imagetool.buildid="89bee97c-7a37-4396-bbbd-b42cfb45fde1"
+ ---> Running in 7166e7f5a403
+Removing intermediate container 7166e7f5a403
+ ---> 8b6393ef38d3
+Step 24/27 : COPY --from=jdk_build --chown=oracle:oracle /u01/jdk /u01/jdk/
+ ---> dc85a97b58d0
+Step 25/27 : COPY --from=wls_build --chown=oracle:oracle /u01/oracle /u01/oracle/
+ ---> bd5ec5b51ad5
+Step 26/27 : USER oracle
+ ---> Running in b422598f883e
+Removing intermediate container b422598f883e
+ ---> 1ca1ea7bb555
+Step 27/27 : WORKDIR /u01/oracle
+ ---> Running in 96ebaf85a153
+Removing intermediate container 96ebaf85a153
+ ---> daec777ecc56
+Successfully built daec777ecc56
+Successfully tagged wls:12.2.1.3.0
+[情報     ] Build successful. Build time=211s. Image tag=wls:12.2.1.3.0
+[anjack@110master imgtool]$
+[anjack@110master imgtool]$
+[anjack@110master imgtool]$ docker images
+REPOSITORY                   TAG          IMAGE ID       CREATED          SIZE
+wls                          12.2.1.3.0   daec777ecc56   53 seconds ago   1.32GB
+ghcr.io/oracle/oraclelinux   8-slim       8deefceffc67   5 days ago       104MB
+[anjack@110master imgtool]$
+
