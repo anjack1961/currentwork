@@ -17,3 +17,6 @@ drwxr-x---  3.0 unx        0 bx stor 22-Oct-20 11:14 wlsdeploy/config/
 -rw-r-----  3.0 unx        0 bx stor 22-Oct-20 11:14 wlsdeploy/config/amimemappings.properties
 14 files, 5577 bytes uncompressed, 2079 bytes compressed:  62.7%
 
+$ minikube kubectl -- get crd domains.weblogic.oracle
+NAME                      CREATED AT
+domains.weblogic.oracle   2022-10-21T00:32:51Z
