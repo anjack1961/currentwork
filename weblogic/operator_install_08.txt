@@ -1,0 +1,625 @@
+
+kubectl apply -f mii-initial-d1-WLS-v1.yaml
+
+kubectl get all -n sample-domain1-ns -o wide
+
+kubectl get domain sample-domain1 -n sample-domain1-ns -o yaml
+
+kubectl get cluster -n sample-domain1-ns -o yaml
+
+kubectl get job.batch/sample-domain1-introspector -n sample-domain1-ns -o yaml
+
+
+
+
+[anjack@120master testdomain]$ ls
+mii-initial-d1-WLS-v1.yaml  podtest.yaml
+[anjack@120master testdomain]$ kubectl apply -f mii-initial-d1-WLS-v1.yaml
+domain.weblogic.oracle/sample-domain1 created
+cluster.weblogic.oracle/sample-domain1-cluster-1 created
+[anjack@120master testdomain]$ kubectl get all -n sample-domain1-ns -o wide
+NAME                                    READY   STATUS             RESTARTS   AGE   IP                NODE                 NOMINATED NODE   READINESS GATES
+pod/sample-domain1-introspector-v6lbp   0/1     ImagePullBackOff   0          19s   192.168.200.165   120node2.aandby.ga   <none>           <none>
+
+NAME                                    COMPLETIONS   DURATION   AGE   CONTAINERS                    IMAGES                  SELECTOR
+job.batch/sample-domain1-introspector   0/1           19s        19s   sample-domain1-introspector   model-in-image:WLS-v1   controller-uid=d39ab858-4789-41c1-8cb6-91ace68c7e87
+
+NAME                                    AGE
+domain.weblogic.oracle/sample-domain1   19s
+
+NAME                                               AGE
+cluster.weblogic.oracle/sample-domain1-cluster-1   19s
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get domain sample-domain1 -n sample-domain1-ns -o yaml
+apiVersion: weblogic.oracle/v9
+kind: Domain
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"weblogic.oracle/v9","kind":"Domain","metadata":{"annotations":{},"labels":{"weblogic.domainUID":"sample-domain1"},"name":"sample-domain1","namespace":"sample-domain1-ns"},"spec":{"clusters":[{"name":"sample-domain1-cluster-1"}],"configuration":{"model":{"domainType":"WLS","runtimeEncryptionSecret":"sample-domain1-runtime-encryption-secret"}},"domainHome":"/u01/domains/sample-domain1","domainHomeSourceType":"FromModel","image":"model-in-image:WLS-v1","imagePullPolicy":"IfNotPresent","includeServerOutInPodLog":true,"introspectVersion":"1","replicas":1,"restartVersion":"1","serverPod":{"env":[{"name":"CUSTOM_DOMAIN_NAME","value":"domain1"},{"name":"JAVA_OPTIONS","value":"-Dweblogic.StdoutDebugEnabled=false"},{"name":"USER_MEM_ARGS","value":"-Djava.security.egd=file:/dev/./urandom -Xms256m -Xmx512m "}],"resources":{"requests":{"cpu":"250m","memory":"768Mi"}}},"serverStartPolicy":"IfNeeded","webLogicCredentialsSecret":{"name":"sample-domain1-weblogic-credentials"}}}
+  creationTimestamp: "2022-11-08T04:36:01Z"
+  generation: 1
+  labels:
+    weblogic.domainUID: sample-domain1
+  name: sample-domain1
+  namespace: sample-domain1-ns
+  resourceVersion: "687559"
+  uid: 58de848f-092d-4e88-8758-b4a8ca313f49
+spec:
+  clusters:
+  - name: sample-domain1-cluster-1
+  configuration:
+    introspectorJobActiveDeadlineSeconds: 120
+    model:
+      domainType: WLS
+      runtimeEncryptionSecret: sample-domain1-runtime-encryption-secret
+    overrideDistributionStrategy: Dynamic
+  domainHome: /u01/domains/sample-domain1
+  domainHomeSourceType: FromModel
+  failureRetryIntervalSeconds: 120
+  failureRetryLimitMinutes: 1440
+  httpAccessLogInLogHome: true
+  image: model-in-image:WLS-v1
+  imagePullPolicy: IfNotPresent
+  includeServerOutInPodLog: true
+  introspectVersion: "1"
+  logHomeLayout: ByServers
+  maxClusterConcurrentShutdown: 1
+  maxClusterConcurrentStartup: 0
+  replicas: 1
+  restartVersion: "1"
+  serverPod:
+    env:
+    - name: CUSTOM_DOMAIN_NAME
+      value: domain1
+    - name: JAVA_OPTIONS
+      value: -Dweblogic.StdoutDebugEnabled=false
+    - name: USER_MEM_ARGS
+      value: '-Djava.security.egd=file:/dev/./urandom -Xms256m -Xmx512m '
+    resources:
+      requests:
+        cpu: 250m
+        memory: 768Mi
+  serverStartPolicy: IfNeeded
+  webLogicCredentialsSecret:
+    name: sample-domain1-weblogic-credentials
+status:
+  clusters: []
+  conditions:
+  - lastTransitionTime: "2022-11-08T04:36:17.237456Z"
+    message: 'Failure on pod ''sample-domain1-introspector-v6lbp'' in namespace ''sample-domain1-ns'':
+      Back-off pulling image "model-in-image:WLS-v1"'
+    reason: ServerPod
+    severity: Severe
+    status: "True"
+    type: Failed
+  - lastTransitionTime: "2022-11-08T04:36:06.163454Z"
+    message: 'Failure on pod ''sample-domain1-introspector-v6lbp'' in namespace ''sample-domain1-ns'':
+      rpc error: code = Unknown desc = Error response from daemon: pull access denied
+      for model-in-image, repository does not exist or may require ''docker login'':
+      denied: requested access to the resource is denied'
+    reason: ServerPod
+    severity: Severe
+    status: "True"
+    type: Failed
+  - lastTransitionTime: "2022-11-08T04:36:01.524558Z"
+    status: "False"
+    type: Available
+  - lastTransitionTime: "2022-11-08T04:36:01.524522Z"
+    status: "False"
+    type: Completed
+  initialFailureTime: "2022-11-08T04:36:06.163454Z"
+  lastFailureTime: "2022-11-08T04:36:47.228088Z"
+  message: 'Failure on pod ''sample-domain1-introspector-v6lbp'' in namespace ''sample-domain1-ns'':
+    Back-off pulling image "model-in-image:WLS-v1". Will retry next at 2022-11-08T04:38:47.228088076Z
+    and approximately every 120 seconds afterward until 2022-11-09T04:36:06.163454Z
+    if the failure is not resolved.'
+  observedGeneration: 1
+  reason: ServerPod
+  servers: []
+  startTime: "2022-11-08T04:36:01.524485Z"
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get cluster -n sample-domain1-ns -o yaml
+apiVersion: v1
+items:
+- apiVersion: weblogic.oracle/v1
+  kind: Cluster
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"weblogic.oracle/v1","kind":"Cluster","metadata":{"annotations":{},"labels":{"weblogic.domainUID":"sample-domain1"},"name":"sample-domain1-cluster-1","namespace":"sample-domain1-ns"},"spec":{"clusterName":"cluster-1","replicas":2}}
+    creationTimestamp: "2022-11-08T04:36:01Z"
+    generation: 1
+    labels:
+      weblogic.domainUID: sample-domain1
+    name: sample-domain1-cluster-1
+    namespace: sample-domain1-ns
+    resourceVersion: "687461"
+    uid: 6c0228b1-f0c6-462b-a253-9c4ef1b9ed39
+  spec:
+    clusterName: cluster-1
+    replicas: 2
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get job.batch/sample-domain1-introspector -n sample-domain1-ns -o yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    batch.kubernetes.io/job-tracking: ""
+  creationTimestamp: "2022-11-08T04:38:02Z"
+  generation: 1
+  labels:
+    weblogic.createdByOperator: "true"
+    weblogic.domainUID: sample-domain1
+    weblogic.introspectVersion: "1"
+  name: sample-domain1-introspector
+  namespace: sample-domain1-ns
+  ownerReferences:
+  - apiVersion: weblogic.oracle/v9
+    controller: true
+    kind: Domain
+    name: sample-domain1
+    uid: 58de848f-092d-4e88-8758-b4a8ca313f49
+  resourceVersion: "687710"
+  uid: 26e085ce-772d-420a-b033-42e9235fa076
+spec:
+  activeDeadlineSeconds: 120
+  backoffLimit: 0
+  completionMode: NonIndexed
+  completions: 1
+  parallelism: 1
+  selector:
+    matchLabels:
+      controller-uid: 26e085ce-772d-420a-b033-42e9235fa076
+  suspend: false
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      creationTimestamp: null
+      labels:
+        controller-uid: 26e085ce-772d-420a-b033-42e9235fa076
+        job-name: sample-domain1-introspector
+        weblogic.createdByOperator: "true"
+        weblogic.domainUID: sample-domain1
+      name: sample-domain1-introspector
+    spec:
+      activeDeadlineSeconds: 120
+      containers:
+      - command:
+        - /weblogic-operator/scripts/introspectDomain.sh
+        env:
+        - name: CUSTOM_DOMAIN_NAME
+          value: domain1
+        - name: JAVA_OPTIONS
+          value: -Dweblogic.StdoutDebugEnabled=false
+        - name: USER_MEM_ARGS
+          value: '-Djava.security.egd=file:/dev/./urandom -Xms256m -Xmx512m '
+        - name: DOMAIN_UID
+          value: sample-domain1
+        - name: DOMAIN_HOME
+          value: /u01/domains/sample-domain1
+        - name: NODEMGR_HOME
+          value: /u01/nodemanager
+        - name: LOG_HOME
+        - name: SERVER_OUT_IN_POD_LOG
+          value: "true"
+        - name: ACCESS_LOG_IN_LOG_HOME
+          value: "true"
+        - name: NAMESPACE
+          value: sample-domain1-ns
+        - name: INTROSPECT_HOME
+          value: /u01/domains/sample-domain1
+        - name: CREDENTIALS_SECRET_NAME
+          value: sample-domain1-weblogic-credentials
+        - name: OPSS_KEY_SECRET_NAME
+        - name: OPSS_WALLETFILE_SECRET_NAME
+        - name: RUNTIME_ENCRYPTION_SECRET_NAME
+          value: sample-domain1-runtime-encryption-secret
+        - name: WDT_DOMAIN_TYPE
+          value: WLS
+        - name: DOMAIN_SOURCE_TYPE
+          value: FromModel
+        - name: ADMIN_CHANNEL_PORT_FORWARDING_ENABLED
+          value: "true"
+        - name: OPERATOR_ENVVAR_NAMES
+          value: CUSTOM_DOMAIN_NAME,JAVA_OPTIONS,USER_MEM_ARGS,DOMAIN_UID,DOMAIN_HOME,NODEMGR_HOME,LOG_HOME,SERVER_OUT_IN_POD_LOG,ACCESS_LOG_IN_LOG_HOME,NAMESPACE,INTROSPECT_HOME,CREDENTIALS_SECRET_NAME,OPSS_KEY_SECRET_NAME,OPSS_WALLETFILE_SECRET_NAME,RUNTIME_ENCRYPTION_SECRET_NAME,WDT_DOMAIN_TYPE,DOMAIN_SOURCE_TYPE,ADMIN_CHANNEL_PORT_FORWARDING_ENABLED
+        - name: WDT_MODEL_HOME
+          value: /u01/wdt/models
+        - name: WDT_INSTALL_HOME
+          value: /u01/wdt/weblogic-deploy
+        - name: ADMIN_USERNAME
+        - name: ADMIN_PASSWORD
+        image: model-in-image:WLS-v1
+        imagePullPolicy: IfNotPresent
+        name: sample-domain1-introspector
+        resources:
+          requests:
+            cpu: 250m
+            memory: 768Mi
+        securityContext: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /weblogic-operator/secrets
+          name: weblogic-credentials-volume
+          readOnly: true
+        - mountPath: /weblogic-operator/scripts
+          name: weblogic-scripts-cm-volume
+          readOnly: true
+        - mountPath: /weblogic-operator/introspectormii
+          name: mii-weblogic-domain-introspect-cm
+        - mountPath: /weblogic-operator/model-runtime-secret
+          name: weblogic-domain-runtime-encryption-volume
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Never
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: weblogic-credentials-volume
+        secret:
+          defaultMode: 420
+          secretName: sample-domain1-weblogic-credentials
+      - configMap:
+          defaultMode: 365
+          name: weblogic-scripts-cm
+        name: weblogic-scripts-cm-volume
+      - configMap:
+          defaultMode: 365
+          name: sample-domain1-weblogic-domain-introspect-cm
+          optional: true
+        name: mii-weblogic-domain-introspect-cm
+      - name: weblogic-domain-runtime-encryption-volume
+        secret:
+          defaultMode: 420
+          optional: true
+          secretName: sample-domain1-runtime-encryption-secret
+status:
+  active: 1
+  startTime: "2022-11-08T04:38:02Z"
+  uncountedTerminatedPods: {}
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get domain sample-domain1 -n sample-domain1-ns -o jsonpath='{.status}'
+{"clusters":[],"conditions":[{"lastTransitionTime":"2022-11-08T04:41:41.250808Z","message":"Failure on pod 'sample-domain1-introspector-tlrvx' in namespace 'sample-domain1-ns': Back-off pulling image \"model-in-image:WLS-v1\"","reason":"ServerPod","severity":"Severe","status":"True","type":"Failed"},{"lastTransitionTime":"2022-11-08T04:41:27.565904Z","message":"Failure on pod 'sample-domain1-introspector-tlrvx' in namespace 'sample-domain1-ns': rpc error: code = Unknown desc = Error response from daemon: pull access denied for model-in-image, repository does not exist or may require 'docker login': denied: requested access to the resource is denied","reason":"ServerPod","severity":"Severe","status":"True","type":"Failed"},{"lastTransitionTime":"2022-11-08T04:40:02.994742Z","message":"Job sample-domain1-introspector failed due to reason: DeadlineExceeded. ActiveDeadlineSeconds of the job is configured with 120 seconds. The job was started 120 seconds ago. Ensure all domain dependencies have been deployed (any secrets, config-maps, PVs, and PVCs that the domain resource references). Use kubectl describe for the job and its pod for more job failure information. The job may be retried by the operator with longer `ActiveDeadlineSeconds` value in each subsequent retry. Use `domain.spec.configuration.introspectorJobActiveDeadlineSeconds` to increase the job timeout interval if the job still fails after the retries are exhausted. The time limit for retries can be configured in `domain.spec.failureRetryLimitMinutes`.","reason":"Introspection","severity":"Severe","status":"True","type":"Failed"},{"lastTransitionTime":"2022-11-08T04:40:02.270713Z","message":"Failure on pod 'sample-domain1-introspector-4dt7x' in namespace 'sample-domain1-ns': Pod was active on the node longer than the specified deadline","reason":"ServerPod","severity":"Severe","status":"True","type":"Failed"},{"lastTransitionTime":"2022-11-08T04:38:21.265581Z","message":"Failure on pod 'sample-domain1-introspector-4dt7x' in namespace 'sample-domain1-ns': Back-off pulling image \"model-in-image:WLS-v1\"","reason":"ServerPod","severity":"Severe","status":"True","type":"Failed"},{"lastTransitionTime":"2022-11-08T04:38:06.665519Z","message":"Failure on pod 'sample-domain1-introspector-4dt7x' in namespace 'sample-domain1-ns': rpc error: code = Unknown desc = Error response from daemon: pull access denied for model-in-image, repository does not exist or may require 'docker login': denied: requested access to the resource is denied","reason":"ServerPod","severity":"Severe","status":"True","type":"Failed"},{"lastTransitionTime":"2022-11-08T04:38:01.281767Z","message":"Failure on pod 'sample-domain1-introspector-v6lbp' in namespace 'sample-domain1-ns': Pod was active on the node longer than the specified deadline","reason":"ServerPod","severity":"Severe","status":"True","type":"Failed"},{"lastTransitionTime":"2022-11-08T04:36:17.237456Z","message":"Failure on pod 'sample-domain1-introspector-v6lbp' in namespace 'sample-domain1-ns': Back-off pulling image \"model-in-image:WLS-v1\"","reason":"ServerPod","severity":"Severe","status":"True","type":"Failed"},{"lastTransitionTime":"2022-11-08T04:36:06.163454Z","message":"Failure on pod 'sample-domain1-introspector-v6lbp' in namespace 'sample-domain1-ns': rpc error: code = Unknown desc = Error response from daemon: pull access denied for model-in-image, repository does not exist or may require 'docker login': denied: requested access to the resource is denied","reason":"ServerPod","severity":"Severe","status":"True","type":"Failed"},{"lastTransitionTime":"2022-11-08T04:36:01.524558Z","status":"False","type":"Available"},{"lastTransitionTime":"2022-11-08T04:36:01.524522Z","status":"False","type":"Completed"}],"failedIntrospectionUid":"26e085ce-772d-420a-b033-42e9235fa076","initialFailureTime":"2022-11-08T04:36:06.163454Z","lastFailureTime":"2022-11-08T04:41:55.453676Z","message":"Failure on pod 'sample-domain1-introspector-tlrvx' in namespace 'sample-domain1-ns': Back-off pulling image \"model-in-image:WLS-v1\". Will retry next at 2022-11-08T04:43:55.453676454Z and approximately every 120 seconds afterward until 2022-11-09T04:36:06.163454Z if the failure is not resolved.","observedGeneration":1,"reason":"ServerPod","servers":[],"startTime":"2022-11-08T04:36:01.524485Z"}[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get pods -n sample-domain1-ns
+NAME                                READY   STATUS             RESTARTS   AGE
+sample-domain1-introspector-tlrvx   0/1     ImagePullBackOff   0          93s
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get pod sample-domain1-introspector-tlrvx -n sample-domain1-ns -o yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    cni.projectcalico.org/containerID: 13e19790ace55a754e8134aac8d9e4c9299c39872226802f99b9a10432e2c53f
+    cni.projectcalico.org/podIP: 192.168.200.167/32
+    cni.projectcalico.org/podIPs: 192.168.200.167/32
+    sidecar.istio.io/inject: "false"
+  creationTimestamp: "2022-11-08T04:41:23Z"
+  finalizers:
+  - batch.kubernetes.io/job-tracking
+  generateName: sample-domain1-introspector-
+  labels:
+    controller-uid: 759fc2b7-3165-4bb5-8ab2-7a8603b7e552
+    job-name: sample-domain1-introspector
+    weblogic.createdByOperator: "true"
+    weblogic.domainUID: sample-domain1
+  name: sample-domain1-introspector-tlrvx
+  namespace: sample-domain1-ns
+  ownerReferences:
+  - apiVersion: batch/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Job
+    name: sample-domain1-introspector
+    uid: 759fc2b7-3165-4bb5-8ab2-7a8603b7e552
+  resourceVersion: "688286"
+  uid: e3aae25d-de72-4421-b6f9-c8f9d333fc72
+spec:
+  activeDeadlineSeconds: 300
+  containers:
+  - command:
+    - /weblogic-operator/scripts/introspectDomain.sh
+    env:
+    - name: CUSTOM_DOMAIN_NAME
+      value: domain1
+    - name: JAVA_OPTIONS
+      value: -Dweblogic.StdoutDebugEnabled=false
+    - name: USER_MEM_ARGS
+      value: '-Djava.security.egd=file:/dev/./urandom -Xms256m -Xmx512m '
+    - name: DOMAIN_UID
+      value: sample-domain1
+    - name: DOMAIN_HOME
+      value: /u01/domains/sample-domain1
+    - name: NODEMGR_HOME
+      value: /u01/nodemanager
+    - name: LOG_HOME
+    - name: SERVER_OUT_IN_POD_LOG
+      value: "true"
+    - name: ACCESS_LOG_IN_LOG_HOME
+      value: "true"
+    - name: NAMESPACE
+      value: sample-domain1-ns
+    - name: INTROSPECT_HOME
+      value: /u01/domains/sample-domain1
+    - name: CREDENTIALS_SECRET_NAME
+      value: sample-domain1-weblogic-credentials
+    - name: OPSS_KEY_SECRET_NAME
+    - name: OPSS_WALLETFILE_SECRET_NAME
+    - name: RUNTIME_ENCRYPTION_SECRET_NAME
+      value: sample-domain1-runtime-encryption-secret
+    - name: WDT_DOMAIN_TYPE
+      value: WLS
+    - name: DOMAIN_SOURCE_TYPE
+      value: FromModel
+    - name: ADMIN_CHANNEL_PORT_FORWARDING_ENABLED
+      value: "true"
+    - name: OPERATOR_ENVVAR_NAMES
+      value: CUSTOM_DOMAIN_NAME,JAVA_OPTIONS,USER_MEM_ARGS,DOMAIN_UID,DOMAIN_HOME,NODEMGR_HOME,LOG_HOME,SERVER_OUT_IN_POD_LOG,ACCESS_LOG_IN_LOG_HOME,NAMESPACE,INTROSPECT_HOME,CREDENTIALS_SECRET_NAME,OPSS_KEY_SECRET_NAME,OPSS_WALLETFILE_SECRET_NAME,RUNTIME_ENCRYPTION_SECRET_NAME,WDT_DOMAIN_TYPE,DOMAIN_SOURCE_TYPE,ADMIN_CHANNEL_PORT_FORWARDING_ENABLED
+    - name: WDT_MODEL_HOME
+      value: /u01/wdt/models
+    - name: WDT_INSTALL_HOME
+      value: /u01/wdt/weblogic-deploy
+    - name: ADMIN_USERNAME
+    - name: ADMIN_PASSWORD
+    image: model-in-image:WLS-v1
+    imagePullPolicy: IfNotPresent
+    name: sample-domain1-introspector
+    resources:
+      requests:
+        cpu: 250m
+        memory: 768Mi
+    securityContext: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /weblogic-operator/secrets
+      name: weblogic-credentials-volume
+      readOnly: true
+    - mountPath: /weblogic-operator/scripts
+      name: weblogic-scripts-cm-volume
+      readOnly: true
+    - mountPath: /weblogic-operator/introspectormii
+      name: mii-weblogic-domain-introspect-cm
+    - mountPath: /weblogic-operator/model-runtime-secret
+      name: weblogic-domain-runtime-encryption-volume
+      readOnly: true
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-x6sk2
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  nodeName: 120node2.aandby.ga
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Never
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: weblogic-credentials-volume
+    secret:
+      defaultMode: 420
+      secretName: sample-domain1-weblogic-credentials
+  - configMap:
+      defaultMode: 365
+      name: weblogic-scripts-cm
+    name: weblogic-scripts-cm-volume
+  - configMap:
+      defaultMode: 365
+      name: sample-domain1-weblogic-domain-introspect-cm
+      optional: true
+    name: mii-weblogic-domain-introspect-cm
+  - name: weblogic-domain-runtime-encryption-volume
+    secret:
+      defaultMode: 420
+      optional: true
+      secretName: sample-domain1-runtime-encryption-secret
+  - name: kube-api-access-x6sk2
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2022-11-08T04:41:23Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2022-11-08T04:41:23Z"
+    message: 'containers with unready status: [sample-domain1-introspector]'
+    reason: ContainersNotReady
+    status: "False"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2022-11-08T04:41:23Z"
+    message: 'containers with unready status: [sample-domain1-introspector]'
+    reason: ContainersNotReady
+    status: "False"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2022-11-08T04:41:23Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - image: model-in-image:WLS-v1
+    imageID: ""
+    lastState: {}
+    name: sample-domain1-introspector
+    ready: false
+    restartCount: 0
+    started: false
+    state:
+      waiting:
+        message: 'rpc error: code = Unknown desc = Error response from daemon: pull
+          access denied for model-in-image, repository does not exist or may require
+          ''docker login'': denied: requested access to the resource is denied'
+        reason: ErrImagePull
+  hostIP: 192.168.122.122
+  phase: Pending
+  podIP: 192.168.200.167
+  podIPs:
+  - ip: 192.168.200.167
+  qosClass: Burstable
+  startTime: "2022-11-08T04:41:23Z"
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get pods -n sample-domain1-ns
+NAME                                READY   STATUS             RESTARTS   AGE
+sample-domain1-introspector-tlrvx   0/1     ImagePullBackOff   0          2m22s
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl describe pod sample-domain1-introspector-tlrvx -n sample-domain1-ns
+Name:         sample-domain1-introspector-tlrvx
+Namespace:    sample-domain1-ns
+Priority:     0
+Node:         120node2.aandby.ga/192.168.122.122
+Start Time:   Tue, 08 Nov 2022 13:41:23 +0900
+Labels:       controller-uid=759fc2b7-3165-4bb5-8ab2-7a8603b7e552
+              job-name=sample-domain1-introspector
+              weblogic.createdByOperator=true
+              weblogic.domainUID=sample-domain1
+Annotations:  cni.projectcalico.org/containerID: 13e19790ace55a754e8134aac8d9e4c9299c39872226802f99b9a10432e2c53f
+              cni.projectcalico.org/podIP: 192.168.200.167/32
+              cni.projectcalico.org/podIPs: 192.168.200.167/32
+              sidecar.istio.io/inject: false
+Status:       Pending
+IP:           192.168.200.167
+IPs:
+  IP:           192.168.200.167
+Controlled By:  Job/sample-domain1-introspector
+Containers:
+  sample-domain1-introspector:
+    Container ID:
+    Image:         model-in-image:WLS-v1
+    Image ID:
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      /weblogic-operator/scripts/introspectDomain.sh
+    State:          Waiting
+      Reason:       ImagePullBackOff
+    Ready:          False
+    Restart Count:  0
+    Requests:
+      cpu:     250m
+      memory:  768Mi
+    Environment:
+      CUSTOM_DOMAIN_NAME:                     domain1
+      JAVA_OPTIONS:                           -Dweblogic.StdoutDebugEnabled=false
+      USER_MEM_ARGS:                          -Djava.security.egd=file:/dev/./urandom -Xms256m -Xmx512m
+      DOMAIN_UID:                             sample-domain1
+      DOMAIN_HOME:                            /u01/domains/sample-domain1
+      NODEMGR_HOME:                           /u01/nodemanager
+      LOG_HOME:
+      SERVER_OUT_IN_POD_LOG:                  true
+      ACCESS_LOG_IN_LOG_HOME:                 true
+      NAMESPACE:                              sample-domain1-ns
+      INTROSPECT_HOME:                        /u01/domains/sample-domain1
+      CREDENTIALS_SECRET_NAME:                sample-domain1-weblogic-credentials
+      OPSS_KEY_SECRET_NAME:
+      OPSS_WALLETFILE_SECRET_NAME:
+      RUNTIME_ENCRYPTION_SECRET_NAME:         sample-domain1-runtime-encryption-secret
+      WDT_DOMAIN_TYPE:                        WLS
+      DOMAIN_SOURCE_TYPE:                     FromModel
+      ADMIN_CHANNEL_PORT_FORWARDING_ENABLED:  true
+      OPERATOR_ENVVAR_NAMES:                  CUSTOM_DOMAIN_NAME,JAVA_OPTIONS,USER_MEM_ARGS,DOMAIN_UID,DOMAIN_HOME,NODEMGR_HOME,LOG_HOME,SERVER_OUT_IN_POD_LOG,ACCESS_LOG_IN_LOG_HOME,NAMESPACE,INTROSPECT_HOME,CREDENTIALS_SECRET_NAME,OPSS_KEY_SECRET_NAME,OPSS_WALLETFILE_SECRET_NAME,RUNTIME_ENCRYPTION_SECRET_NAME,WDT_DOMAIN_TYPE,DOMAIN_SOURCE_TYPE,ADMIN_CHANNEL_PORT_FORWARDING_ENABLED
+      WDT_MODEL_HOME:                         /u01/wdt/models
+      WDT_INSTALL_HOME:                       /u01/wdt/weblogic-deploy
+      ADMIN_USERNAME:
+      ADMIN_PASSWORD:
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-x6sk2 (ro)
+      /weblogic-operator/introspectormii from mii-weblogic-domain-introspect-cm (rw)
+      /weblogic-operator/model-runtime-secret from weblogic-domain-runtime-encryption-volume (ro)
+      /weblogic-operator/scripts from weblogic-scripts-cm-volume (ro)
+      /weblogic-operator/secrets from weblogic-credentials-volume (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             False
+  ContainersReady   False
+  PodScheduled      True
+Volumes:
+  weblogic-credentials-volume:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  sample-domain1-weblogic-credentials
+    Optional:    false
+  weblogic-scripts-cm-volume:
+    Type:      ConfigMap (a volume populated by a ConfigMap)
+    Name:      weblogic-scripts-cm
+    Optional:  false
+  mii-weblogic-domain-introspect-cm:
+    Type:      ConfigMap (a volume populated by a ConfigMap)
+    Name:      sample-domain1-weblogic-domain-introspect-cm
+    Optional:  true
+  weblogic-domain-runtime-encryption-volume:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  sample-domain1-runtime-encryption-secret
+    Optional:    true
+  kube-api-access-x6sk2:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                  From               Message
+  ----     ------     ----                 ----               -------
+  Normal   Scheduled  2m52s                default-scheduler  Successfully assigned sample-domain1-ns/sample-domain1-introspector-tlrvx to 120node2.aandby.ga
+  Normal   Pulling    76s (x4 over 2m51s)  kubelet            Pulling image "model-in-image:WLS-v1"
+  Warning  Failed     74s (x4 over 2m49s)  kubelet            Failed to pull image "model-in-image:WLS-v1": rpc error: code = Unknown desc = Error response from daemon: pull access denied for model-in-image, repository does not exist or may require 'docker login': denied: requested access to the resource is denied
+  Warning  Failed     74s (x4 over 2m49s)  kubelet            Error: ErrImagePull
+  Warning  Failed     61s (x6 over 2m48s)  kubelet            Error: ImagePullBackOff
+  Normal   BackOff    46s (x7 over 2m48s)  kubelet            Back-off pulling image "model-in-image:WLS-v1"
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+
+
+
