@@ -1,0 +1,129 @@
+
+[testuser@120master ~]$ kubectl create ns sample-domain1-ns
+namespace/sample-domain1-ns created
+[testuser@120master ~]$ kubectl label ns sample-domain1-ns weblogic-operator=enabled
+namespace/sample-domain1-ns labeled
+[testuser@120master ~]$ kubectl get ns sample-domain1-ns -o yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  creationTimestamp: "2022-11-08T12:20:42Z"
+  labels:
+    kubernetes.io/metadata.name: sample-domain1-ns
+    weblogic-operator: enabled
+  name: sample-domain1-ns
+  resourceVersion: "728632"
+  uid: 4d1d9ce0-a2da-4ce4-9e74-9e97a649f2ce
+spec:
+  finalizers:
+  - kubernetes
+status:
+  phase: Active
+[testuser@120master ~]$ kubectl -n sample-domain1-ns create secret generic \
+>   sample-domain1-weblogic-credentials \
+>    --from-literal=username=weblogic --from-literal=password=MY_WEBLOGIC_ADMIN_PASSWORD
+secret/sample-domain1-weblogic-credentials created
+[testuser@120master ~]$ kubectl -n sample-domain1-ns label  secret \
+>   sample-domain1-weblogic-credentials \
+>   weblogic.domainUID=sample-domain1
+secret/sample-domain1-weblogic-credentials labeled
+[testuser@120master ~]$ kubectl get secret sample-domain1-weblogic-credentials -n sample-domain1-ns -o yaml
+apiVersion: v1
+data:
+  password: TVlfV0VCTE9HSUNfQURNSU5fUEFTU1dPUkQ=
+  username: d2VibG9naWM=
+kind: Secret
+metadata:
+  creationTimestamp: "2022-11-08T12:21:20Z"
+  labels:
+    weblogic.domainUID: sample-domain1
+  name: sample-domain1-weblogic-credentials
+  namespace: sample-domain1-ns
+  resourceVersion: "728691"
+  uid: 42694c1c-1253-43dd-9f33-66a8def0a59e
+type: Opaque
+[testuser@120master ~]$ kubectl -n sample-domain1-ns create secret generic \
+>   sample-domain1-runtime-encryption-secret \
+>    --from-literal=password=MY_RUNTIME_PASSWORD
+secret/sample-domain1-runtime-encryption-secret created
+[testuser@120master ~]$ kubectl -n sample-domain1-ns label  secret \
+>   sample-domain1-runtime-encryption-secret \
+>   weblogic.domainUID=sample-domain1
+secret/sample-domain1-runtime-encryption-secret labeled
+[testuser@120master ~]$ kubectl get secret sample-domain1-runtime-encryption-secret -n sample-domain1-ns -o yaml
+apiVersion: v1
+data:
+  password: TVlfUlVOVElNRV9QQVNTV09SRA==
+kind: Secret
+metadata:
+  creationTimestamp: "2022-11-08T12:21:57Z"
+  labels:
+    weblogic.domainUID: sample-domain1
+  name: sample-domain1-runtime-encryption-secret
+  namespace: sample-domain1-ns
+  resourceVersion: "728748"
+  uid: 658b4136-5b84-4257-b5fd-a007b638629a
+type: Opaque
+[testuser@120master ~]$
+[testuser@120master ~]$
+[testuser@120master ~]$
+[testuser@120master ~]$ kubectl apply -f mii-initial-d1-WLS-v1.yaml
+error: the path "mii-initial-d1-WLS-v1.yaml" does not exist
+[testuser@120master ~]$ ls
+WLS-v1.tar  calico.yaml  daemon.json  istio-1.13.2  kubernetes.repo  ng_calico-etcd.yaml  setup.bash  testdomain  wkope
+[testuser@120master ~]$ cd testdomain/
+[testuser@120master testdomain]$ kubectl apply -f mii-initial-d1-WLS-v1.yaml
+domain.weblogic.oracle/sample-domain1 created
+cluster.weblogic.oracle/sample-domain1-cluster-1 created
+[testuser@120master testdomain]$
+[testuser@120master testdomain]$
+[testuser@120master testdomain]$ kubectl get pods -n sample-domain1-ns --watch
+NAME                                READY   STATUS    RESTARTS   AGE
+sample-domain1-introspector-4zlqh   1/1     Running   0          65s
+sample-domain1-introspector-4zlqh   0/1     Completed   0          78s
+sample-domain1-introspector-4zlqh   0/1     Completed   0          78s
+sample-domain1-introspector-4zlqh   0/1     Completed   0          78s
+sample-domain1-introspector-4zlqh   0/1     Terminating   0          79s
+sample-domain1-introspector-4zlqh   0/1     Terminating   0          79s
+sample-domain1-admin-server         0/1     Pending       0          0s
+sample-domain1-admin-server         0/1     Pending       0          0s
+sample-domain1-admin-server         0/1     ContainerCreating   0          0s
+sample-domain1-admin-server         0/1     ContainerCreating   0          2s
+sample-domain1-admin-server         0/1     Running             0          3s
+sample-domain1-admin-server         1/1     Running             0          42s
+sample-domain1-managed-server1      0/1     Pending             0          0s
+sample-domain1-managed-server1      0/1     Pending             0          0s
+sample-domain1-managed-server2      0/1     Pending             0          0s
+sample-domain1-managed-server2      0/1     Pending             0          0s
+sample-domain1-managed-server1      0/1     ContainerCreating   0          1s
+sample-domain1-managed-server2      0/1     ContainerCreating   0          0s
+sample-domain1-managed-server1      0/1     ContainerCreating   0          6s
+sample-domain1-managed-server2      0/1     ContainerCreating   0          6s
+sample-domain1-admin-server         0/1     Running             0          50s
+sample-domain1-admin-server         1/1     Running             0          51s
+sample-domain1-managed-server1      0/1     Running             0          9s
+sample-domain1-managed-server2      0/1     Running             0          10s
+sample-domain1-managed-server2      1/1     Running             0          88s
+sample-domain1-managed-server1      1/1     Running             0          91s
+^C[testuser@120master testdomain]$
+[testuser@120master testdomain]$
+[testuser@120master testdomain]$ kubectl get all -n sample-domain1-ns
+NAME                                 READY   STATUS    RESTARTS   AGE
+pod/sample-domain1-admin-server      1/1     Running   0          4m22s
+pod/sample-domain1-managed-server1   1/1     Running   0          3m40s
+pod/sample-domain1-managed-server2   1/1     Running   0          3m39s
+
+NAME                                       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/sample-domain1-admin-server        ClusterIP   None             <none>        7001/TCP   4m22s
+service/sample-domain1-cluster-cluster-1   ClusterIP   192.168.200.88   <none>        8001/TCP   3m40s
+service/sample-domain1-managed-server1     ClusterIP   None             <none>        8001/TCP   3m40s
+service/sample-domain1-managed-server2     ClusterIP   None             <none>        8001/TCP   3m39s
+
+NAME                                    AGE
+domain.weblogic.oracle/sample-domain1   5m44s
+
+NAME                                               AGE
+cluster.weblogic.oracle/sample-domain1-cluster-1   5m44s
+[testuser@120master testdomain]$
+[testuser@120master testdomain]$
+[testuser@120master testdomain]$
