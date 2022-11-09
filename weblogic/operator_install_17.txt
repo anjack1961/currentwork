@@ -1,0 +1,741 @@
+kubectl get pod -n sample-domain1-ns -o yaml
+
+
+[anjack@120master testdomain]$ kubectl get pod -n sample-domain1-ns -o yaml
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      cni.projectcalico.org/containerID: 91c9a8999f6d8fbb2789ffaa7261a8d695d7591631acaaaa95ccba7f78adad28
+      cni.projectcalico.org/podIP: 192.168.200.130/32
+      cni.projectcalico.org/podIPs: 192.168.200.130/32
+      prometheus.io/path: /wls-exporter/metrics
+      prometheus.io/port: "7001"
+      prometheus.io/scrape: "true"
+      weblogic.sha256: b918e0ed68348590a1c57d8919e349cb4528a6326f3941467010a7c25436c477
+    creationTimestamp: "2022-11-08T12:24:19Z"
+    labels:
+      weblogic.createdByOperator: "true"
+      weblogic.domainName: domain1
+      weblogic.domainRestartVersion: "1"
+      weblogic.domainUID: sample-domain1
+      weblogic.introspectVersion: "1"
+      weblogic.modelInImageDomainZipHash: md5.7fd2e2fb3b2a78414dd9ccdf05128607.md5
+      weblogic.operatorVersion: 4.0.1
+      weblogic.serverName: admin-server
+    name: sample-domain1-admin-server
+    namespace: sample-domain1-ns
+    ownerReferences:
+    - apiVersion: weblogic.oracle/v9
+      controller: true
+      kind: Domain
+      name: sample-domain1
+      uid: c62b3541-110e-42aa-8e80-83269c8b8f6c
+    resourceVersion: "729116"
+    uid: 90b3f3e4-01ef-4798-851f-6264161ee768
+  spec:
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: weblogic.domainUID
+                operator: In
+                values:
+                - sample-domain1
+            topologyKey: kubernetes.io/hostname
+          weight: 100
+    containers:
+    - command:
+      - /weblogic-operator/scripts/startServer.sh
+      env:
+      - name: CUSTOM_DOMAIN_NAME
+        value: domain1
+      - name: JAVA_OPTIONS
+        value: -Dweblogic.StdoutDebugEnabled=false
+      - name: USER_MEM_ARGS
+        value: '-Djava.security.egd=file:/dev/./urandom -Xms256m -Xmx512m '
+      - name: DOMAIN_NAME
+        value: domain1
+      - name: DOMAIN_HOME
+        value: /u01/domains/sample-domain1
+      - name: ADMIN_NAME
+        value: admin-server
+      - name: ADMIN_PORT
+        value: "7001"
+      - name: SERVER_NAME
+        value: admin-server
+      - name: DOMAIN_UID
+        value: sample-domain1
+      - name: NODEMGR_HOME
+        value: /u01/nodemanager
+      - name: LOG_HOME
+      - name: SERVER_OUT_IN_POD_LOG
+        value: "true"
+      - name: SERVICE_NAME
+        value: sample-domain1-admin-server
+      - name: AS_SERVICE_NAME
+        value: sample-domain1-admin-server
+      - name: ADMIN_USERNAME
+      - name: ADMIN_PASSWORD
+      - name: LOCAL_ADMIN_PORT
+        value: "7001"
+      - name: LOCAL_ADMIN_PROTOCOL
+        value: t3
+      - name: SHUTDOWN_TYPE
+        value: Graceful
+      - name: SHUTDOWN_TIMEOUT
+        value: "30"
+      - name: SHUTDOWN_IGNORE_SESSIONS
+        value: "false"
+      - name: DYNAMIC_CONFIG_OVERRIDE
+        value: "true"
+      - name: DOMAIN_SOURCE_TYPE
+        value: FromModel
+      - name: INTERNAL_OPERATOR_CERT
+        value: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVpVENDQTNHZ0F3SUJBZ0lHQVlSUXlUS1ZNQTBHQ1NxR1NJYjNEUUVCQ3dVQU1INHhHakFZQmdOVkJBTU0KRVhkbFlteHZaMmxqTFc5d1pYSmhkRzl5TVFzd0NRWURWUVFHRXdKVlV6RVRNQkVHQTFVRUNBd0tRMEZNU1VaUApVazVKUVRFVk1CTUdBMVVFQnd3TVVrVkVWMDlQUkNCRFNWUlpNUkV3RHdZRFZRUUtEQWhYWldKTWIyZHBZekVVCk1CSUdBMVVFQ3d3TFJHVjJaV3h2Y0cxbGJuUXdIaGNOTWpJeE1UQTNNRFl6TVRFeldoY05Nekl4TVRBME1EWXoKTVRFeldqQitNUm93R0FZRFZRUUREQkYzWldKc2IyZHBZeTF2Y0dWeVlYUnZjakVMTUFrR0ExVUVCaE1DVlZNeApFekFSQmdOVkJBZ01Da05CVEVsR1QxSk9TVUV4RlRBVEJnTlZCQWNNREZKRlJGZFBUMFFnUTBsVVdURVJNQThHCkExVUVDZ3dJVjJWaVRHOW5hV014RkRBU0JnTlZCQXNNQzBSbGRtVnNiM0J0Wlc1ME1JSUJJREFOQmdrcWhraUcKOXcwQkFRRUZBQU9DQVEwQU1JSUJDQUtDQVFFQXBBRFZ6dGRXUXN5d3A3TEpHRFQrd2xHRitLZHd6NDZtYkdkLwo2d1V1aVJjb1F0NnNBd2ZwemVmbjd5TDhmMmZnR2Z4QjJucHpadSs3NmpTcHFzdkpzbElvSHhxYkd2N2dyZSszCnJiSTZxWUlYVm0rZXVhRmFFdktyL3VnVjNlRFh5eUxDekFJWDBtTmJ2My9rRXh6YUhkbzNpVkpidFBVZThITWoKdXdreDgwWklRTTFiMnVuSjVSSWYxM3Q2SFRUQUdhWVNiUVBjOUk0TXJJTWxFM25Rb1FPaFlESDRySnltTGlrWgpEZ09taitmaTdvZEpEbkhwR1ZmSVBmK3RnWlRhZUFWVXBLSE1YT3hybExmdUQzY2hEeHBWbHB0akk4em5zZzhCCjFEbEowMXdYeTlpandxaWZPTGJzU1NPeWkxMTZKMXFDSVp2T3EreVRINENGNWljSzNRSUJBNk9DQVEwd2dnRUoKTUE4R0ExVWRFd0VCL3dRRk1BTUJBZjh3Z2ZVR0ExVWRFUVNCN1RDQjZvSWVhVzUwWlhKdVlXd3RkMlZpYkc5bgphV010YjNCbGNtRjBiM0l0YzNaamdqcHBiblJsY201aGJDMTNaV0pzYjJkcFl5MXZjR1Z5WVhSdmNpMXpkbU11CmMyRnRjR3hsTFhkbFlteHZaMmxqTFc5d1pYSmhkRzl5TFc1emdqNXBiblJsY201aGJDMTNaV0pzYjJkcFl5MXYKY0dWeVlYUnZjaTF6ZG1NdWMyRnRjR3hsTFhkbFlteHZaMmxqTFc5d1pYSmhkRzl5TFc1ekxuTjJZNEpNYVc1MApaWEp1WVd3dGQyVmliRzluYVdNdGIzQmxjbUYwYjNJdGMzWmpMbk5oYlhCc1pTMTNaV0pzYjJkcFl5MXZjR1Z5CllYUnZjaTF1Y3k1emRtTXVZMngxYzNSbGNpNXNiMk5oYkRBTkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQWVVUDkKZkdZL2pxQ0dzWkc3THEwTDVaWTF6c2FwL081SFhiUmg4V0FPRThuemxMMFB4UC9CVWdYbWNyeEFMK1BYcmUwMgpWQ3IzMERnalYvdFRwZStwWk95RGlGMWdHMmtqWkxqVURwN2JkREpUOXlvcnphMTh0aXdndmhIeGRQM0tnaHBFCmpMSnlMT2s3WHhVL1FxZEJsbG1pN1A4MzV1RmpMdTYrSlI3NFpGVEQ5a2ZrRGVpMnZ6QzErbW9ONTFpZEgrcVUKaTRrZ01yWGM5S1AwUSsvaDZSVGFlWEY3R281TzYzNGtlU29oSDJoV1NreGdQRzlrdkRnT2F0anhyVVlnd09jagpzeXcxWW13TU80Q05QRnZOSlc4aGtrckUvaDkwUkVEOGR5Tm9rV2lWR2tDakhiNy9nTTltaGVkVGthQTh1SGhmCmxsTko1QnNRMlpCTERVNXZLZz09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+      image: model-in-image:WLS-v1
+      imagePullPolicy: IfNotPresent
+      lifecycle:
+        preStop:
+          exec:
+            command:
+            - /weblogic-operator/scripts/stopServer.sh
+      livenessProbe:
+        exec:
+          command:
+          - /weblogic-operator/scripts/livenessProbe.sh
+        failureThreshold: 1
+        initialDelaySeconds: 30
+        periodSeconds: 45
+        successThreshold: 1
+        timeoutSeconds: 5
+      name: weblogic-server
+      ports:
+      - containerPort: 7001
+        name: internal-t3
+        protocol: TCP
+      - containerPort: 7001
+        name: default
+        protocol: TCP
+      readinessProbe:
+        failureThreshold: 1
+        httpGet:
+          path: /weblogic/ready
+          port: 7001
+          scheme: HTTP
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        successThreshold: 1
+        timeoutSeconds: 5
+      resources:
+        requests:
+          cpu: 250m
+          memory: 768Mi
+      securityContext: {}
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /weblogic-operator/scripts
+        name: weblogic-scripts-cm-volume
+        readOnly: true
+      - mountPath: /weblogic-operator/debug
+        name: weblogic-domain-debug-cm-volume
+        readOnly: true
+      - mountPath: /weblogic-operator/introspector
+        name: weblogic-domain-introspect-cm-volume
+      - mountPath: /weblogic-operator/model-runtime-secret
+        name: weblogic-domain-runtime-encryption-volume
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-kr4fx
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    hostname: sample-domain1-admin-server
+    nodeName: 120node2.aandby.ga
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext: {}
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 40
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - configMap:
+        defaultMode: 365
+        name: weblogic-scripts-cm
+      name: weblogic-scripts-cm-volume
+    - configMap:
+        defaultMode: 365
+        name: sample-domain1-weblogic-domain-debug-cm
+        optional: true
+      name: weblogic-domain-debug-cm-volume
+    - configMap:
+        defaultMode: 365
+        name: sample-domain1-weblogic-domain-introspect-cm
+      name: weblogic-domain-introspect-cm-volume
+    - name: weblogic-domain-runtime-encryption-volume
+      secret:
+        defaultMode: 420
+        secretName: sample-domain1-runtime-encryption-secret
+    - name: kube-api-access-kr4fx
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:24:19Z"
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:25:09Z"
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:25:09Z"
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:24:19Z"
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - containerID: docker://e35e05a86b421324977865dd8355146544e8986013dd42d38dba7d4caa968046
+      image: model-in-image:WLS-v1
+      imageID: docker://sha256:76d2b79558c50ce19d9704a0d6d00035c39be54a2ff6d55944c6bcaeb36284ca
+      lastState: {}
+      name: weblogic-server
+      ready: true
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: "2022-11-08T12:24:22Z"
+    hostIP: 192.168.122.122
+    phase: Running
+    podIP: 192.168.200.130
+    podIPs:
+    - ip: 192.168.200.130
+    qosClass: Burstable
+    startTime: "2022-11-08T12:24:19Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      cni.projectcalico.org/containerID: 9db7ab719a69b42b678e72ccbc1f26463dc4375bd53020421cb3925f3b4ad36e
+      cni.projectcalico.org/podIP: 192.168.113.19/32
+      cni.projectcalico.org/podIPs: 192.168.113.19/32
+      prometheus.io/path: /wls-exporter/metrics
+      prometheus.io/port: "8001"
+      prometheus.io/scrape: "true"
+      weblogic.sha256: 00f9a5512c39c72e83a5b804405cf9b69c961197bbfb3c1b0c54ae32f7ff624f
+    creationTimestamp: "2022-11-08T12:25:01Z"
+    labels:
+      weblogic.clusterName: cluster-1
+      weblogic.createdByOperator: "true"
+      weblogic.domainName: domain1
+      weblogic.domainRestartVersion: "1"
+      weblogic.domainUID: sample-domain1
+      weblogic.introspectVersion: "1"
+      weblogic.modelInImageDomainZipHash: md5.7fd2e2fb3b2a78414dd9ccdf05128607.md5
+      weblogic.operatorVersion: 4.0.1
+      weblogic.serverName: managed-server1
+    name: sample-domain1-managed-server1
+    namespace: sample-domain1-ns
+    ownerReferences:
+    - apiVersion: weblogic.oracle/v9
+      controller: true
+      kind: Domain
+      name: sample-domain1
+      uid: c62b3541-110e-42aa-8e80-83269c8b8f6c
+    resourceVersion: "729279"
+    uid: c7138cc6-cea7-40ae-bc57-56a66049ccfa
+  spec:
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: weblogic.clusterName
+                operator: In
+                values:
+                - cluster-1
+              - key: weblogic.domainUID
+                operator: In
+                values:
+                - sample-domain1
+            topologyKey: kubernetes.io/hostname
+          weight: 100
+    containers:
+    - command:
+      - /weblogic-operator/scripts/startServer.sh
+      env:
+      - name: CUSTOM_DOMAIN_NAME
+        value: domain1
+      - name: JAVA_OPTIONS
+        value: -Dweblogic.StdoutDebugEnabled=false
+      - name: USER_MEM_ARGS
+        value: '-Djava.security.egd=file:/dev/./urandom -Xms256m -Xmx512m '
+      - name: DOMAIN_NAME
+        value: domain1
+      - name: DOMAIN_HOME
+        value: /u01/domains/sample-domain1
+      - name: ADMIN_NAME
+        value: admin-server
+      - name: ADMIN_PORT
+        value: "7001"
+      - name: SERVER_NAME
+        value: managed-server1
+      - name: DOMAIN_UID
+        value: sample-domain1
+      - name: NODEMGR_HOME
+        value: /u01/nodemanager
+      - name: LOG_HOME
+      - name: SERVER_OUT_IN_POD_LOG
+        value: "true"
+      - name: SERVICE_NAME
+        value: sample-domain1-managed-server1
+      - name: AS_SERVICE_NAME
+        value: sample-domain1-admin-server
+      - name: ADMIN_USERNAME
+      - name: ADMIN_PASSWORD
+      - name: LOCAL_ADMIN_PORT
+        value: "8001"
+      - name: LOCAL_ADMIN_PROTOCOL
+        value: t3
+      - name: SHUTDOWN_TYPE
+        value: Graceful
+      - name: SHUTDOWN_TIMEOUT
+        value: "30"
+      - name: SHUTDOWN_IGNORE_SESSIONS
+        value: "false"
+      - name: DYNAMIC_CONFIG_OVERRIDE
+        value: "true"
+      - name: DOMAIN_SOURCE_TYPE
+        value: FromModel
+      image: model-in-image:WLS-v1
+      imagePullPolicy: IfNotPresent
+      lifecycle:
+        preStop:
+          exec:
+            command:
+            - /weblogic-operator/scripts/stopServer.sh
+      livenessProbe:
+        exec:
+          command:
+          - /weblogic-operator/scripts/livenessProbe.sh
+        failureThreshold: 1
+        initialDelaySeconds: 30
+        periodSeconds: 45
+        successThreshold: 1
+        timeoutSeconds: 5
+      name: weblogic-server
+      ports:
+      - containerPort: 8001
+        name: default
+        protocol: TCP
+      readinessProbe:
+        failureThreshold: 1
+        httpGet:
+          path: /weblogic/ready
+          port: 8001
+          scheme: HTTP
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        successThreshold: 1
+        timeoutSeconds: 5
+      resources:
+        requests:
+          cpu: 250m
+          memory: 768Mi
+      securityContext: {}
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /weblogic-operator/scripts
+        name: weblogic-scripts-cm-volume
+        readOnly: true
+      - mountPath: /weblogic-operator/debug
+        name: weblogic-domain-debug-cm-volume
+        readOnly: true
+      - mountPath: /weblogic-operator/introspector
+        name: weblogic-domain-introspect-cm-volume
+      - mountPath: /weblogic-operator/model-runtime-secret
+        name: weblogic-domain-runtime-encryption-volume
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-4z8kb
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: 120node1.aandby.ga
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext: {}
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 40
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - configMap:
+        defaultMode: 365
+        name: weblogic-scripts-cm
+      name: weblogic-scripts-cm-volume
+    - configMap:
+        defaultMode: 365
+        name: sample-domain1-weblogic-domain-debug-cm
+        optional: true
+      name: weblogic-domain-debug-cm-volume
+    - configMap:
+        defaultMode: 365
+        name: sample-domain1-weblogic-domain-introspect-cm
+      name: weblogic-domain-introspect-cm-volume
+    - name: weblogic-domain-runtime-encryption-volume
+      secret:
+        defaultMode: 420
+        secretName: sample-domain1-runtime-encryption-secret
+    - name: kube-api-access-4z8kb
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:25:02Z"
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:26:32Z"
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:26:32Z"
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:25:01Z"
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - containerID: docker://26efd2b209ba68e053b3d4bd2e4009f7354082814af82c342536a4f9fdd7ddcb
+      image: model-in-image:WLS-v1
+      imageID: docker://sha256:76d2b79558c50ce19d9704a0d6d00035c39be54a2ff6d55944c6bcaeb36284ca
+      lastState: {}
+      name: weblogic-server
+      ready: true
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: "2022-11-08T12:25:08Z"
+    hostIP: 192.168.122.121
+    phase: Running
+    podIP: 192.168.113.19
+    podIPs:
+    - ip: 192.168.113.19
+    qosClass: Burstable
+    startTime: "2022-11-08T12:25:02Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      cni.projectcalico.org/containerID: 5ae29c51fea63afc9aa92bfb82f70e48d38401624a3d9ef2f43a525af901f952
+      cni.projectcalico.org/podIP: 192.168.200.129/32
+      cni.projectcalico.org/podIPs: 192.168.200.129/32
+      prometheus.io/path: /wls-exporter/metrics
+      prometheus.io/port: "8001"
+      prometheus.io/scrape: "true"
+      weblogic.sha256: dd7db41e87fd361ccc3e855fd63b2c16a0e6429b4b0670a08fbd2029aba6523a
+    creationTimestamp: "2022-11-08T12:25:02Z"
+    labels:
+      weblogic.clusterName: cluster-1
+      weblogic.createdByOperator: "true"
+      weblogic.domainName: domain1
+      weblogic.domainRestartVersion: "1"
+      weblogic.domainUID: sample-domain1
+      weblogic.introspectVersion: "1"
+      weblogic.modelInImageDomainZipHash: md5.7fd2e2fb3b2a78414dd9ccdf05128607.md5
+      weblogic.operatorVersion: 4.0.1
+      weblogic.serverName: managed-server2
+    name: sample-domain1-managed-server2
+    namespace: sample-domain1-ns
+    ownerReferences:
+    - apiVersion: weblogic.oracle/v9
+      controller: true
+      kind: Domain
+      name: sample-domain1
+      uid: c62b3541-110e-42aa-8e80-83269c8b8f6c
+    resourceVersion: "729269"
+    uid: f758618c-db68-4007-9ecc-aee50aea3a81
+  spec:
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: weblogic.clusterName
+                operator: In
+                values:
+                - cluster-1
+              - key: weblogic.domainUID
+                operator: In
+                values:
+                - sample-domain1
+            topologyKey: kubernetes.io/hostname
+          weight: 100
+    containers:
+    - command:
+      - /weblogic-operator/scripts/startServer.sh
+      env:
+      - name: CUSTOM_DOMAIN_NAME
+        value: domain1
+      - name: JAVA_OPTIONS
+        value: -Dweblogic.StdoutDebugEnabled=false
+      - name: USER_MEM_ARGS
+        value: '-Djava.security.egd=file:/dev/./urandom -Xms256m -Xmx512m '
+      - name: DOMAIN_NAME
+        value: domain1
+      - name: DOMAIN_HOME
+        value: /u01/domains/sample-domain1
+      - name: ADMIN_NAME
+        value: admin-server
+      - name: ADMIN_PORT
+        value: "7001"
+      - name: SERVER_NAME
+        value: managed-server2
+      - name: DOMAIN_UID
+        value: sample-domain1
+      - name: NODEMGR_HOME
+        value: /u01/nodemanager
+      - name: LOG_HOME
+      - name: SERVER_OUT_IN_POD_LOG
+        value: "true"
+      - name: SERVICE_NAME
+        value: sample-domain1-managed-server2
+      - name: AS_SERVICE_NAME
+        value: sample-domain1-admin-server
+      - name: ADMIN_USERNAME
+      - name: ADMIN_PASSWORD
+      - name: LOCAL_ADMIN_PORT
+        value: "8001"
+      - name: LOCAL_ADMIN_PROTOCOL
+        value: t3
+      - name: SHUTDOWN_TYPE
+        value: Graceful
+      - name: SHUTDOWN_TIMEOUT
+        value: "30"
+      - name: SHUTDOWN_IGNORE_SESSIONS
+        value: "false"
+      - name: DYNAMIC_CONFIG_OVERRIDE
+        value: "true"
+      - name: DOMAIN_SOURCE_TYPE
+        value: FromModel
+      image: model-in-image:WLS-v1
+      imagePullPolicy: IfNotPresent
+      lifecycle:
+        preStop:
+          exec:
+            command:
+            - /weblogic-operator/scripts/stopServer.sh
+      livenessProbe:
+        exec:
+          command:
+          - /weblogic-operator/scripts/livenessProbe.sh
+        failureThreshold: 1
+        initialDelaySeconds: 30
+        periodSeconds: 45
+        successThreshold: 1
+        timeoutSeconds: 5
+      name: weblogic-server
+      ports:
+      - containerPort: 8001
+        name: default
+        protocol: TCP
+      readinessProbe:
+        failureThreshold: 1
+        httpGet:
+          path: /weblogic/ready
+          port: 8001
+          scheme: HTTP
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        successThreshold: 1
+        timeoutSeconds: 5
+      resources:
+        requests:
+          cpu: 250m
+          memory: 768Mi
+      securityContext: {}
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /weblogic-operator/scripts
+        name: weblogic-scripts-cm-volume
+        readOnly: true
+      - mountPath: /weblogic-operator/debug
+        name: weblogic-domain-debug-cm-volume
+        readOnly: true
+      - mountPath: /weblogic-operator/introspector
+        name: weblogic-domain-introspect-cm-volume
+      - mountPath: /weblogic-operator/model-runtime-secret
+        name: weblogic-domain-runtime-encryption-volume
+        readOnly: true
+      - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+        name: kube-api-access-mrs5c
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: 120node2.aandby.ga
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext: {}
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 40
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - configMap:
+        defaultMode: 365
+        name: weblogic-scripts-cm
+      name: weblogic-scripts-cm-volume
+    - configMap:
+        defaultMode: 365
+        name: sample-domain1-weblogic-domain-debug-cm
+        optional: true
+      name: weblogic-domain-debug-cm-volume
+    - configMap:
+        defaultMode: 365
+        name: sample-domain1-weblogic-domain-introspect-cm
+      name: weblogic-domain-introspect-cm-volume
+    - name: weblogic-domain-runtime-encryption-volume
+      secret:
+        defaultMode: 420
+        secretName: sample-domain1-runtime-encryption-secret
+    - name: kube-api-access-mrs5c
+      projected:
+        defaultMode: 420
+        sources:
+        - serviceAccountToken:
+            expirationSeconds: 3607
+            path: token
+        - configMap:
+            items:
+            - key: ca.crt
+              path: ca.crt
+            name: kube-root-ca.crt
+        - downwardAPI:
+            items:
+            - fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace
+              path: namespace
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:25:02Z"
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:26:30Z"
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:26:30Z"
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2022-11-08T12:25:02Z"
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - containerID: docker://c1c37d1706bbdf343f50eed157e4aff6ccae8f0a7974de97ca0b52601b05dce3
+      image: model-in-image:WLS-v1
+      imageID: docker://sha256:76d2b79558c50ce19d9704a0d6d00035c39be54a2ff6d55944c6bcaeb36284ca
+      lastState: {}
+      name: weblogic-server
+      ready: true
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: "2022-11-08T12:25:10Z"
+    hostIP: 192.168.122.122
+    phase: Running
+    podIP: 192.168.200.129
+    podIPs:
+    - ip: 192.168.200.129
+    qosClass: Burstable
+    startTime: "2022-11-08T12:25:02Z"
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""
+[anjack@120master testdomain]$
+
+
+
