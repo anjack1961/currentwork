@@ -1,0 +1,48 @@
+$ kubectl get pods -n sample-domain1-ns --watch
+NAME                                READY   STATUS    RESTARTS   AGE
+sample-domain1-introspector-4zlqh   1/1     Running   0          65s
+sample-domain1-introspector-4zlqh   0/1     Completed   0          78s
+sample-domain1-introspector-4zlqh   0/1     Completed   0          78s
+sample-domain1-introspector-4zlqh   0/1     Completed   0          78s
+sample-domain1-introspector-4zlqh   0/1     Terminating   0          79s
+sample-domain1-introspector-4zlqh   0/1     Terminating   0          79s
+sample-domain1-admin-server         0/1     Pending       0          0s
+sample-domain1-admin-server         0/1     Pending       0          0s
+sample-domain1-admin-server         0/1     ContainerCreating   0          0s
+sample-domain1-admin-server         0/1     ContainerCreating   0          2s
+sample-domain1-admin-server         0/1     Running             0          3s
+sample-domain1-admin-server         1/1     Running             0          42s
+sample-domain1-managed-server1      0/1     Pending             0          0s
+sample-domain1-managed-server1      0/1     Pending             0          0s
+sample-domain1-managed-server2      0/1     Pending             0          0s
+sample-domain1-managed-server2      0/1     Pending             0          0s
+sample-domain1-managed-server1      0/1     ContainerCreating   0          1s
+sample-domain1-managed-server2      0/1     ContainerCreating   0          0s
+sample-domain1-managed-server1      0/1     ContainerCreating   0          6s
+sample-domain1-managed-server2      0/1     ContainerCreating   0          6s
+sample-domain1-admin-server         0/1     Running             0          50s
+sample-domain1-admin-server         1/1     Running             0          51s
+sample-domain1-managed-server1      0/1     Running             0          9s
+sample-domain1-managed-server2      0/1     Running             0          10s
+sample-domain1-managed-server2      1/1     Running             0          88s
+sample-domain1-managed-server1      1/1     Running             0          91s
+
+$ kubectl get all -n sample-domain1-ns
+NAME                                 READY   STATUS    RESTARTS   AGE
+pod/sample-domain1-admin-server      1/1     Running   0          4m22s
+pod/sample-domain1-managed-server1   1/1     Running   0          3m40s
+pod/sample-domain1-managed-server2   1/1     Running   0          3m39s
+
+NAME                                       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/sample-domain1-admin-server        ClusterIP   None             <none>        7001/TCP   4m22s
+service/sample-domain1-cluster-cluster-1   ClusterIP   192.168.200.88   <none>        8001/TCP   3m40s
+service/sample-domain1-managed-server1     ClusterIP   None             <none>        8001/TCP   3m40s
+service/sample-domain1-managed-server2     ClusterIP   None             <none>        8001/TCP   3m39s
+
+NAME                                    AGE
+domain.weblogic.oracle/sample-domain1   5m44s
+
+NAME                                               AGE
+cluster.weblogic.oracle/sample-domain1-cluster-1   5m44s
+
+
