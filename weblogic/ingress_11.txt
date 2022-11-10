@@ -1,0 +1,327 @@
+
+[anjack@120master testdomain]$ kubectl get ns
+NAME                          STATUS   AGE
+default                       Active   240d
+kube-node-lease               Active   240d
+kube-public                   Active   240d
+kube-system                   Active   240d
+nginx                         Active   42h
+sample-domain1-ns             Active   42h
+sample-domain2-ns             Active   97m
+sample-weblogic-operator-ns   Active   3d
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get all sample-domain1-ns
+error: you must specify only one resource
+[anjack@120master testdomain]$ kubectl get all -n sample-domain1-ns
+NAME                                 READY   STATUS    RESTARTS   AGE
+pod/sample-domain1-admin-server      1/1     Running   0          42h
+pod/sample-domain1-managed-server1   1/1     Running   0          42h
+pod/sample-domain1-managed-server2   1/1     Running   0          42h
+
+NAME                                       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/sample-domain1-admin-server        ClusterIP   None             <none>        7001/TCP   42h
+service/sample-domain1-cluster-cluster-1   ClusterIP   192.168.200.88   <none>        8001/TCP   42h
+service/sample-domain1-managed-server1     ClusterIP   None             <none>        8001/TCP   42h
+service/sample-domain1-managed-server2     ClusterIP   None             <none>        8001/TCP   42h
+
+NAME                                    AGE
+domain.weblogic.oracle/sample-domain1   42h
+
+NAME                                               AGE
+cluster.weblogic.oracle/sample-domain1-cluster-1   42h
+[anjack@120master testdomain]$ kubectl get all -n sample-domain2-ns
+NAME                                 READY   STATUS    RESTARTS   AGE
+pod/sample-domain2-admin-server      1/1     Running   0          95m
+pod/sample-domain2-managed-server1   1/1     Running   0          94m
+pod/sample-domain2-managed-server2   1/1     Running   0          94m
+
+NAME                                       TYPE        CLUSTER-IP        EXTERNAL-IP   PORT(S)    AGE
+service/sample-domain2-admin-server        ClusterIP   None              <none>        7001/TCP   95m
+service/sample-domain2-cluster-cluster-1   ClusterIP   192.168.200.219   <none>        8001/TCP   94m
+service/sample-domain2-managed-server1     ClusterIP   None              <none>        8001/TCP   94m
+service/sample-domain2-managed-server2     ClusterIP   None              <none>        8001/TCP   94m
+
+NAME                                    AGE
+domain.weblogic.oracle/sample-domain2   96m
+
+NAME                                               AGE
+cluster.weblogic.oracle/sample-domain2-cluster-1   96m
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get ingress -n sample-domain1-ns
+NAME                   CLASS   HOSTS         ADDRESS   PORTS   AGE
+domain1-ingress-host   nginx   domain1.org             80      27m
+[anjack@120master testdomain]$ kubectl get ingress -n sample-domain2-ns
+NAME                   CLASS   HOSTS         ADDRESS   PORTS   AGE
+domain2-ingress-host   nginx   domain2.org             80      87m
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get all -n nginx
+NAME                                                           READY   STATUS    RESTARTS   AGE
+pod/nginx-operator-ingress-nginx-controller-5d7784d57f-tkbw8   1/1     Running   0          42h
+
+NAME                                                        TYPE           CLUSTER-IP        EXTERNAL-IP   PORT(S)                      AGE
+service/nginx-operator-ingress-nginx-controller             LoadBalancer   192.168.200.229   <pending>     80:30462/TCP,443:30513/TCP   42h
+service/nginx-operator-ingress-nginx-controller-admission   ClusterIP      192.168.200.173   <none>        443/TCP                      42h
+
+NAME                                                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/nginx-operator-ingress-nginx-controller   1/1     1            1           42h
+
+NAME                                                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/nginx-operator-ingress-nginx-controller-5d7784d57f   1         1         1       42h
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ curl  -H 'host: domain1.org' http://localhost:${LB_PORT}/myapp_war/index.jsp
+
+
+
+
+
+
+
+<html><body><pre>
+*****************************************************************
+
+Hello World! This is version 'v1' of the mii-sample JSP web-app.
+
+Welcome to WebLogic Server 'managed-server2'!
+
+  domain UID  = 'sample-domain1'
+  domain name = 'domain1'
+
+Found 1 local cluster runtime:
+  Cluster 'cluster-1'
+
+Found min threads constraint runtime named 'SampleMinThreads' with configured count: 1
+
+Found max threads constraint runtime named 'SampleMaxThreads' with configured count: 10
+
+Found 0 local data sources:
+
+*****************************************************************
+</pre></body></html>
+
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ curl  -H 'host: domain2.org' http://localhost:${LB_PORT}/myapp_war/index.jsp
+
+
+
+
+
+
+
+<html><body><pre>
+*****************************************************************
+
+Hello World! This is version 'v1' of the mii-sample JSP web-app.
+
+Welcome to WebLogic Server 'managed-server2'!
+
+  domain UID  = 'sample-domain2'
+  domain name = 'domain2'
+
+Found 1 local cluster runtime:
+  Cluster 'cluster-1'
+
+Found min threads constraint runtime named 'SampleMinThreads' with configured count: 1
+
+Found max threads constraint runtime named 'SampleMaxThreads' with configured count: 10
+
+Found 0 local data sources:
+
+*****************************************************************
+</pre></body></html>
+
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ curl  -H 'host: domain1.org' http://localhost:${LB_PORT}/myapp_war/index.jsp
+
+
+
+
+
+
+
+<html><body><pre>
+*****************************************************************
+
+Hello World! This is version 'v1' of the mii-sample JSP web-app.
+
+Welcome to WebLogic Server 'managed-server1'!
+
+  domain UID  = 'sample-domain1'
+  domain name = 'domain1'
+
+Found 1 local cluster runtime:
+  Cluster 'cluster-1'
+
+Found min threads constraint runtime named 'SampleMinThreads' with configured count: 1
+
+Found max threads constraint runtime named 'SampleMaxThreads' with configured count: 10
+
+Found 0 local data sources:
+
+*****************************************************************
+</pre></body></html>
+
+[anjack@120master testdomain]$ curl  -H 'host: domain2.org' http://localhost:${LB_PORT}/myapp_war/index.jsp
+
+
+
+
+
+
+
+<html><body><pre>
+*****************************************************************
+
+Hello World! This is version 'v1' of the mii-sample JSP web-app.
+
+Welcome to WebLogic Server 'managed-server1'!
+
+  domain UID  = 'sample-domain2'
+  domain name = 'domain2'
+
+Found 1 local cluster runtime:
+  Cluster 'cluster-1'
+
+Found min threads constraint runtime named 'SampleMinThreads' with configured count: 1
+
+Found max threads constraint runtime named 'SampleMaxThreads' with configured count: 10
+
+Found 0 local data sources:
+
+*****************************************************************
+</pre></body></html>
+
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+
+[anjack@120master testdomain]$ diff mii-initial-d1-WLS-v1.yaml mii-initial-d2-WLS-v1.yaml
+9,10c9,10
+<   name: sample-domain1
+<   namespace: sample-domain1-ns
+---
+>   name: sample-domain2
+>   namespace: sample-domain2-ns
+12c12
+<     weblogic.domainUID: sample-domain1
+---
+>     weblogic.domainUID: sample-domain2
+20c20
+<   domainHome: /u01/domains/sample-domain1
+---
+>   domainHome: /u01/domains/sample-domain2
+31c31
+<
+---
+>
+34,35c34,35
+<   webLogicCredentialsSecret:
+<     name: sample-domain1-weblogic-credentials
+---
+>   webLogicCredentialsSecret:
+>     name: sample-domain2-weblogic-credentials
+42c42
+<
+---
+>
+45,46c45,46
+<   #logHome: /shared/logs/sample-domain1
+<
+---
+>   #logHome: /shared/logs/sample-domain2
+>
+56c56
+<     # - This sample uses CUSTOM_DOMAIN_NAME in its image model file
+---
+>     # - This sample uses CUSTOM_DOMAIN_NAME in its image model file
+60c60
+<       value: "domain1"
+---
+>       value: "domain2"
+74c74
+<     #    claimName: sample-domain1-weblogic-sample-pvc
+---
+>     #    claimName: sample-domain2-weblogic-sample-pvc
+86c86
+<
+---
+>
+92c92
+<   - name: sample-domain1-cluster-1
+---
+>   - name: sample-domain2-cluster-1
+111c111
+<       #configMap: sample-domain1-wdt-config-map
+---
+>       #configMap: sample-domain2-wdt-config-map
+114c114
+<       runtimeEncryptionSecret: sample-domain1-runtime-encryption-secret
+---
+>       runtimeEncryptionSecret: sample-domain2-runtime-encryption-secret
+119c119
+<     #- sample-domain1-datasource-secret
+---
+>     #- sample-domain2-datasource-secret
+126c126
+<   name: sample-domain1-cluster-1
+---
+>   name: sample-domain2-cluster-1
+128c128
+<   namespace: sample-domain1-ns
+---
+>   namespace: sample-domain2-ns
+131c131
+<     weblogic.domainUID: sample-domain1
+---
+>     weblogic.domainUID: sample-domain2
+
+[anjack@120master testdomain]$ cat host-routing.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: domain1-ingress-host
+  namespace: sample-domain1-ns
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: domain1.org
+    http:
+      paths:
+      - path:
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: sample-domain1-cluster-cluster-1
+            port:
+              number: 8001
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: domain2-ingress-host
+  namespace: sample-domain2-ns
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: domain2.org
+    http:
+      paths:
+      - path:
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: sample-domain2-cluster-cluster-1
+            port:
+              number: 8001
+[anjack@120master testdomain]$
+
+
+
+
+
+
+
