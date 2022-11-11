@@ -1,0 +1,119 @@
+
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx --force-update
+
+helm search repo ingress-nginx
+
+kubectl create namespace nginx
+
+helm install nginx-operator ingress-nginx/ingress-nginx --namespace nginx
+
+kubectl get all --namespace nginx
+
+POD_NAME=$(kubectl get pods -n nginx -l app.kubernetes.io/name=ingress-nginx -o jsonpath='{.items[0].metadata.name}')
+echo $POD_NAME
+
+kubectl exec -it $POD_NAME -n nginx -- /nginx-ingress-controller --version
+
+
+
+[anjack@120master testdomain]$ kubectl get ns
+NAME                          STATUS   AGE
+default                       Active   238d
+kube-node-lease               Active   238d
+kube-public                   Active   238d
+kube-system                   Active   238d
+sample-domain1-ns             Active   14m
+sample-weblogic-operator-ns   Active   30h
+[anjack@120master testdomain]$ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx --force-update
+"ingress-nginx" has been added to your repositories
+[anjack@120master testdomain]$ helm search repo ingress-nginx
+NAME                            CHART VERSION   APP VERSION     DESCRIPTION
+ingress-nginx/ingress-nginx     4.3.0           1.4.0           Ingress controller for Kubernetes using NGINX a...
+[anjack@120master testdomain]$ kubectl create namespace nginx
+namespace/nginx created
+[anjack@120master testdomain]$ helm install nginx-operator ingress-nginx/ingress-nginx --namespace nginx
+NAME: nginx-operator
+LAST DEPLOYED: Tue Nov  8 21:38:02 2022
+NAMESPACE: nginx
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+The ingress-nginx controller has been installed.
+It may take a few minutes for the LoadBalancer IP to be available.
+You can watch the status by running 'kubectl --namespace nginx get services -o wide -w nginx-operator-ingress-nginx-controller'
+
+An example Ingress that makes use of the controller:
+  apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    name: example
+    namespace: foo
+  spec:
+    ingressClassName: nginx
+    rules:
+      - host: www.example.com
+        http:
+          paths:
+            - pathType: Prefix
+              backend:
+                service:
+                  name: exampleService
+                  port:
+                    number: 80
+              path: /
+    # This section is only required if TLS is to be enabled for the Ingress
+    tls:
+      - hosts:
+        - www.example.com
+        secretName: example-tls
+
+If TLS is enabled for the Ingress, a Secret containing the certificate and key must also be provided:
+
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: example-tls
+    namespace: foo
+  data:
+    tls.crt: <base64 encoded cert>
+    tls.key: <base64 encoded key>
+  type: kubernetes.io/tls
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get all --namespace nginx
+NAME                                                           READY   STATUS    RESTARTS   AGE
+pod/nginx-operator-ingress-nginx-controller-5d7784d57f-tkbw8   1/1     Running   0          2m19s
+
+NAME                                                        TYPE           CLUSTER-IP        EXTERNAL-IP   PORT(S)                      AGE
+service/nginx-operator-ingress-nginx-controller             LoadBalancer   192.168.200.229   <pending>     80:30462/TCP,443:30513/TCP   2m20s
+service/nginx-operator-ingress-nginx-controller-admission   ClusterIP      192.168.200.173   <none>        443/TCP                      2m20s
+
+NAME                                                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/nginx-operator-ingress-nginx-controller   1/1     1            1           2m20s
+
+NAME                                                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/nginx-operator-ingress-nginx-controller-5d7784d57f   1         1         1       2m20s
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ POD_NAME=$(kubectl get pods -n nginx -l app.kubernetes.io/name=ingress-nginx -o jsonpath='{.items[0].metadata.name}')
+[anjack@120master testdomain]$ echo $POD_NAME
+nginx-operator-ingress-nginx-controller-5d7784d57f-tkbw8
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl exec -it $POD_NAME -n nginx -- /nginx-ingress-controller --version
+-------------------------------------------------------------------------------
+NGINX Ingress controller
+  Release:       v1.4.0
+  Build:         50be2bf95fd1ef480420e2aa1d6c5c7c138c95ea
+  Repository:    https://github.com/kubernetes/ingress-nginx
+  nginx version: nginx/1.19.10
+
+-------------------------------------------------------------------------------
+
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+
+http://localhost/myapp_war/index.jsp
+
+
