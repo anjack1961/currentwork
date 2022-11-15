@@ -1,0 +1,58 @@
+
+4. ドメイン内のすべてのサーバを再起動
+
+$ kubectl apply -f domain_restart.yaml
+domain.weblogic.oracle/sample-domain1 configured
+
+[anjack@120master testdomain]$ kubectl get pods -n sample-domain1-ns --watch
+NAME                             READY   STATUS    RESTARTS   AGE
+sample-domain1-admin-server      1/1     Running   0          35m
+sample-domain1-managed-server1   1/1     Running   0          34m
+sample-domain1-managed-server2   1/1     Running   0          34m
+
+
+
+sample-domain1-managed-server1   1/1     Running   0          34m
+sample-domain1-managed-server2   1/1     Running   0          34m
+sample-domain1-introspector-phb2k   0/1     Pending   0          0s
+sample-domain1-introspector-phb2k   0/1     Pending   0          0s
+sample-domain1-introspector-phb2k   0/1     ContainerCreating   0          0s
+sample-domain1-introspector-phb2k   0/1     ContainerCreating   0          3s
+sample-domain1-introspector-phb2k   0/1     Completed           0          4s
+sample-domain1-introspector-phb2k   0/1     Completed           0          5s
+sample-domain1-introspector-phb2k   0/1     Completed           0          5s
+sample-domain1-introspector-phb2k   0/1     Terminating         0          5s
+sample-domain1-introspector-phb2k   0/1     Terminating         0          5s
+sample-domain1-managed-server1      1/1     Terminating         0          35m
+sample-domain1-managed-server1      1/1     Terminating         0          35m
+sample-domain1-managed-server1      0/1     Terminating         0          35m
+sample-domain1-managed-server1      0/1     Terminating         0          35m
+sample-domain1-managed-server1      0/1     Terminating         0          35m
+sample-domain1-managed-server1      0/1     Pending             0          0s
+sample-domain1-managed-server1      0/1     Pending             0          0s
+sample-domain1-managed-server1      0/1     ContainerCreating   0          0s
+sample-domain1-managed-server1      0/1     ContainerCreating   0          2s
+sample-domain1-managed-server1      0/1     Running             0          3s
+sample-domain1-managed-server1      1/1     Running             0          65s
+sample-domain1-managed-server2      1/1     Terminating         0          36m
+sample-domain1-managed-server2      1/1     Terminating         0          36m
+sample-domain1-managed-server2      0/1     Terminating         0          36m
+sample-domain1-managed-server2      0/1     Terminating         0          36m
+sample-domain1-managed-server2      0/1     Terminating         0          36m
+sample-domain1-managed-server2      0/1     Pending             0          0s
+sample-domain1-managed-server2      0/1     Pending             0          0s
+sample-domain1-managed-server2      0/1     ContainerCreating   0          0s
+sample-domain1-managed-server2      0/1     ContainerCreating   0          2s
+sample-domain1-managed-server2      0/1     Running             0          4s
+sample-domain1-managed-server2      1/1     Running             0          69s
+
+
+[anjack@120master testdomain]$ kubectl get pods -n sample-domain1-ns
+NAME                             READY   STATUS    RESTARTS   AGE
+sample-domain1-admin-server      1/1     Running   0          8m9s
+sample-domain1-managed-server1   1/1     Running   0          6m59s
+sample-domain1-managed-server2   1/1     Running   0          5m23s
+
+
+
+
