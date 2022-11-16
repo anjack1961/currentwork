@@ -1,0 +1,100 @@
+
+[anjack@120master testdomain]$ grep image -n mii-initial-d2-WLS-v1.yaml
+19:  # the image for 'Model in Image' domains.
+22:  # The WebLogic Server image that the Operator uses to start the domain
+23:  image: "model-in-image:WLS-v1"
+25:  # Defaults to "Always" if image tag (version) is ':latest'
+26:  imagePullPolicy: IfNotPresent
+28:  # Identify which Secret contains the credentials for pulling an image
+29:  #imagePullSecrets:
+56:    # - This sample uses CUSTOM_DOMAIN_NAME in its image model file
+117:    # (the model yaml in the optional configMap or in the image)
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ sed -i "23 s/WLS-v1/WLS-v2/" mii-initial-d2-WLS-v1.yaml
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ grep image -n mii-initial-d2-WLS-v1.yaml
+19:  # the image for 'Model in Image' domains.
+22:  # The WebLogic Server image that the Operator uses to start the domain
+23:  image: "model-in-image:WLS-v2"
+25:  # Defaults to "Always" if image tag (version) is ':latest'
+26:  imagePullPolicy: IfNotPresent
+28:  # Identify which Secret contains the credentials for pulling an image
+29:  #imagePullSecrets:
+56:    # - This sample uses CUSTOM_DOMAIN_NAME in its image model file
+117:    # (the model yaml in the optional configMap or in the image)
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl apply -f mii-initial-d2-WLS-v1.yaml
+domain.weblogic.oracle/sample-domain2 configured
+cluster.weblogic.oracle/sample-domain2-cluster-1 unchanged
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$ kubectl get pod sample-domain2-admin-server -n sample-domain2-ns -o yaml | grep -i image
+    weblogic.modelInImageDomainZipHash: md5.18999094131df6fa677f59fbcd8ff489.md5
+    image: model-in-image:WLS-v2
+    imagePullPolicy: IfNotPresent
+    image: model-in-image:WLS-v2
+    imageID: docker://sha256:99b42f630fcd2f638b9a96b5b46d7ccda78a24a1c8b5770a66c56d822a36c90b
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+[anjack@120master testdomain]$
+
+
+
+$ kubectl get pods -n sample-domain2-ns --watch
+NAME                             READY   STATUS    RESTARTS      AGE
+sample-domain2-admin-server      1/1     Running   4 (66m ago)   5d20h
+sample-domain2-managed-server1   1/1     Running   2 (41h ago)   5d20h
+sample-domain2-managed-server2   1/1     Running   4 (66m ago)   5d20h
+
+
+sample-domain2-introspector-94xh4   0/1     Pending   0             0s
+sample-domain2-introspector-94xh4   0/1     Pending   0             1s
+sample-domain2-introspector-94xh4   0/1     ContainerCreating   0             1s
+sample-domain2-introspector-94xh4   0/1     ContainerCreating   0             2s
+sample-domain2-introspector-94xh4   1/1     Running             0             4s
+sample-domain2-introspector-94xh4   0/1     Completed           0             63s
+sample-domain2-introspector-94xh4   0/1     Completed           0             63s
+sample-domain2-introspector-94xh4   0/1     Completed           0             64s
+sample-domain2-introspector-94xh4   0/1     Terminating         0             64s
+sample-domain2-introspector-94xh4   0/1     Terminating         0             64s
+sample-domain2-admin-server         1/1     Terminating         4 (69m ago)   5d20h
+sample-domain2-admin-server         1/1     Terminating         4 (69m ago)   5d20h
+sample-domain2-admin-server         0/1     Terminating         4             5d20h
+sample-domain2-admin-server         0/1     Terminating         4             5d20h
+sample-domain2-admin-server         0/1     Terminating         4             5d20h
+sample-domain2-admin-server         0/1     Pending             0             0s
+sample-domain2-admin-server         0/1     Pending             0             1s
+sample-domain2-admin-server         0/1     ContainerCreating   0             1s
+sample-domain2-admin-server         0/1     ContainerCreating   0             3s
+sample-domain2-admin-server         0/1     Running             0             5s
+sample-domain2-admin-server         1/1     Running             0             47s
+sample-domain2-managed-server1      1/1     Running             2 (41h ago)   5d20h
+sample-domain2-managed-server2      1/1     Running             4 (70m ago)   5d20h
+sample-domain2-managed-server1      1/1     Terminating         2 (41h ago)   5d20h
+sample-domain2-managed-server1      1/1     Terminating         2 (41h ago)   5d20h
+sample-domain2-managed-server1      0/1     Terminating         2             5d20h
+sample-domain2-managed-server1      0/1     Terminating         2             5d20h
+sample-domain2-managed-server1      0/1     Terminating         2             5d20h
+sample-domain2-managed-server1      0/1     Pending             0             0s
+sample-domain2-managed-server1      0/1     Pending             0             0s
+sample-domain2-managed-server1      0/1     ContainerCreating   0             0s
+sample-domain2-managed-server1      0/1     ContainerCreating   0             2s
+sample-domain2-managed-server1      0/1     Running             0             4s
+sample-domain2-managed-server1      1/1     Running             0             72s
+sample-domain2-managed-server2      1/1     Terminating         4 (71m ago)   5d20h
+sample-domain2-managed-server2      1/1     Terminating         4 (72m ago)   5d20h
+sample-domain2-managed-server2      0/1     Terminating         4             5d20h
+sample-domain2-managed-server2      0/1     Terminating         4             5d20h
+sample-domain2-managed-server2      0/1     Terminating         4             5d20h
+sample-domain2-managed-server2      0/1     Pending             0             1s
+sample-domain2-managed-server2      0/1     Pending             0             1s
+sample-domain2-managed-server2      0/1     ContainerCreating   0             1s
+sample-domain2-managed-server2      0/1     ContainerCreating   0             3s
+sample-domain2-managed-server2      0/1     Running             0             5s
+sample-domain2-managed-server2      1/1     Running             0             72s
+
