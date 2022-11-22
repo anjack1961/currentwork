@@ -1,0 +1,168 @@
+Web アプリケーションを起動する
+
+minikube kubectl --
+
+minikube kubectl -- get pods -o wide
+
+1. 好みのテキスト エディタを使用して、 の内容を確認します deployment-01-webapp.yml。
+deployment-01-webapp.yml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp
+  labels:
+    app: webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      serviceAccountName: vault
+      containers:
+        - name: app
+          image: burtlo/exampleapp-ruby:k8s
+          imagePullPolicy: Always
+          env:
+            - name: VAULT_ADDR
+              value: 'http://vault:8200'
+            - name: JWT_PATH
+              value: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+            - name: SERVICE_PORT
+              value: '8080'
+
+Web アプリケーションのデプロイメントでは、環境変数のリストを定義します。
+
+JWT_PATH : Kubernetes が発行する JSON Web トークン (JWT) のパスを設定します。このトークンは、Web アプリケーションが Vault で認証するために使用されます。
+VAULT_ADDR : Vault サービスのアドレスを設定します。vaultHelm チャートは、エンドポイント (つまり、 、 、および という名前のポッド) に要求を転送するvault-0というvault-1名前の Kubernetes サービスを定義しましたvault-2。
+SERVICE_PORT : サービスが着信 HTTP 要求をリッスンするポートを設定します。
+
+2. ファイルを適用して、webapp を Kubernetes にデプロイします deployment-01-webapp.yml。
+minikube kubectl -- apply --filename deployment-01-webapp.yml
+
+3. デフォルトの名前空間内のすべてのポッドを取得します。
+minikube kubectl -- get pods -o wide
+
+4. 別のターミナルで、ポート8080 の webapp ポッドに送信 されたすべてのリクエストをポート転送します。http://localhost:8080
+minikube kubectl -- port-forward \
+    $(minikube kubectl -- get pod -l app=webapp -o jsonpath="{.items[0].metadata.name}") \
+    8080:8080
+
+[anjack@110master ~]$ minikube kubectl -- port-forward \
+>     $(minikube kubectl -- get pod -l app=webapp -o jsonpath="{.items[0].metadata.name}") \
+>     8080:8080
+Forwarding from 127.0.0.1:8080 -> 8080
+Forwarding from [::1]:8080 -> 8080
+
+
+5. 元の端末で、 でcurlリクエストを 実行しhttp://localhost:8080ます。
+curl http://localhost:8080
+
+webapp ポッドのポート 8080 で実行されている Web アプリケーション:
+  Kubernetes サービス アカウント トークンで認証します
+  secret/data/webapp/configパスで読み取り機能を持つ Vault トークンを受け取り ます
+  secret/data/webapp/configパスからシークレットを取得します
+  シークレットを JSON として表示します
+
+
+
+
+[anjack@110master vault]$ cat -n deployment-01-webapp.yml
+     1  apiVersion: apps/v1
+     2  kind: Deployment
+     3  metadata:
+     4    name: webapp
+     5    labels:
+     6      app: webapp
+     7  spec:
+     8    replicas: 1
+     9    selector:
+    10      matchLabels:
+    11        app: webapp
+    12    template:
+    13      metadata:
+    14        labels:
+    15          app: webapp
+    16      spec:
+    17        serviceAccountName: vault
+    18        containers:
+    19          - name: app
+    20            image: burtlo/exampleapp-ruby:k8s
+    21            imagePullPolicy: Always
+    22            env:
+    23              - name: VAULT_ADDR
+    24                value: 'http://vault:8200'
+    25              - name: JWT_PATH
+    26                value: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+    27              - name: SERVICE_PORT
+    28                value: '8080'
+    29
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE    IP           NODE       NOMINATED NODE   READINESS GATES
+vault-0                                 1/1     Running   0          172m   172.17.0.4   minikube   <none>           <none>
+vault-1                                 1/1     Running   0          172m   172.17.0.5   minikube   <none>           <none>
+vault-2                                 1/1     Running   0          172m   172.17.0.6   minikube   <none>           <none>
+vault-agent-injector-5b75fd986d-6wjvz   1/1     Running   0          172m   172.17.0.3   minikube   <none>           <none>
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- apply --filename deployment-01-webapp.yml
+deployment.apps/webapp created
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+NAME                                    READY   STATUS              RESTARTS   AGE    IP           NODE       NOMINATED NODE   READINESS GATES
+vault-0                                 1/1     Running             0          172m   172.17.0.4   minikube   <none>           <none>
+vault-1                                 1/1     Running             0          172m   172.17.0.5   minikube   <none>           <none>
+vault-2                                 1/1     Running             0          172m   172.17.0.6   minikube   <none>           <none>
+vault-agent-injector-5b75fd986d-6wjvz   1/1     Running             0          172m   172.17.0.3   minikube   <none>           <none>
+webapp-84b548b59b-2dr45                 0/1     ContainerCreating   0          8s     <none>       minikube   <none>           <none>
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+NAME                                    READY   STATUS              RESTARTS   AGE    IP           NODE       NOMINATED NODE   READINESS GATES
+vault-0                                 1/1     Running             0          173m   172.17.0.4   minikube   <none>           <none>
+vault-1                                 1/1     Running             0          173m   172.17.0.5   minikube   <none>           <none>
+vault-2                                 1/1     Running             0          172m   172.17.0.6   minikube   <none>           <none>
+vault-agent-injector-5b75fd986d-6wjvz   1/1     Running             0          173m   172.17.0.3   minikube   <none>           <none>
+webapp-84b548b59b-2dr45                 0/1     ContainerCreating   0          36s    <none>       minikube   <none>           <none>
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+NAME                                    READY   STATUS    RESTARTS      AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+vault-0                                 1/1     Running   0             174m    172.17.0.4   minikube   <none>           <none>
+vault-1                                 1/1     Running   0             174m    172.17.0.5   minikube   <none>           <none>
+vault-2                                 1/1     Running   0             174m    172.17.0.6   minikube   <none>           <none>
+vault-agent-injector-5b75fd986d-6wjvz   1/1     Running   1 (96s ago)   174m    172.17.0.3   minikube   <none>           <none>
+webapp-84b548b59b-2dr45                 1/1     Running   0             2m21s   172.17.0.7   minikube   <none>           <none>
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ curl http://localhost:8080
+{"password"=>"static-password", "username"=>"static-user"}[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$
+
+[anjack@110master ~]$ minikube kubectl -- port-forward \
+>     $(minikube kubectl -- get pod -l app=webapp -o jsonpath="{.items[0].metadata.name}") \
+>     8080:8080
+Forwarding from 127.0.0.1:8080 -> 8080
+Forwarding from [::1]:8080 -> 8080
+
+
+Handling connection for 8080
+
+
+
+
+
+
+
+
+

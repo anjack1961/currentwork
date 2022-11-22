@@ -1,0 +1,103 @@
+
+cat > helm-vault-raft-values.yml <<EOF
+server:
+  affinity: ""
+  ha:
+    enabled: true
+    raft: 
+      enabled: true
+EOF
+
+helm install vault hashicorp/vault --values helm-vault-raft-values.yml
+
+minikube kubectl -- get all -A
+
+minikube kubectl -- get pods
+
+
+[anjack@110master ~]$ mkdir vault
+[anjack@110master ~]$ cd vault/
+[anjack@110master vault]$ ls
+[anjack@110master vault]$
+[anjack@110master vault]$ cat > helm-vault-raft-values.yml <<EOF
+> server:
+>   affinity: ""
+>   ha:
+>     enabled: true
+>     raft:
+>       enabled: true
+> EOF
+[anjack@110master vault]$
+[anjack@110master vault]$ ls
+helm-vault-raft-values.yml
+
+[anjack@110master vault]$ helm install vault hashicorp/vault --values helm-vault-raft-values.yml
+NAME: vault
+LAST DEPLOYED: Tue Nov 22 10:44:34 2022
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+NOTES:
+Thank you for installing HashiCorp Vault!
+
+Now that you have deployed Vault, you should look over the docs on using
+Vault with Kubernetes available here:
+
+https://www.vaultproject.io/docs/
+
+
+Your release is named vault. To learn more about the release, try:
+
+  $ helm status vault
+  $ helm get manifest vault
+[anjack@110master vault]$
+
+
+
+[anjack@110master vault]$ minikube kubectl -- get all -A
+NAMESPACE     NAME                                        READY   STATUS    RESTARTS      AGE
+default       pod/vault-0                                 0/1     Running   0             12m
+default       pod/vault-1                                 0/1     Running   0             12m
+default       pod/vault-2                                 0/1     Running   0             12m
+default       pod/vault-agent-injector-5b75fd986d-6wjvz   1/1     Running   0             12m
+kube-system   pod/coredns-565d847f94-w6l4s                1/1     Running   0             38m
+kube-system   pod/etcd-minikube                           1/1     Running   0             38m
+kube-system   pod/kube-apiserver-minikube                 1/1     Running   0             38m
+kube-system   pod/kube-controller-manager-minikube        1/1     Running   0             38m
+kube-system   pod/kube-proxy-wz5w2                        1/1     Running   0             38m
+kube-system   pod/kube-scheduler-minikube                 1/1     Running   0             38m
+kube-system   pod/storage-provisioner                     1/1     Running   1 (38m ago)   38m
+
+NAMESPACE     NAME                               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                  AGE
+default       service/kubernetes                 ClusterIP   10.96.0.1       <none>        443/TCP                  38m
+default       service/vault                      ClusterIP   10.108.139.57   <none>        8200/TCP,8201/TCP        12m
+default       service/vault-active               ClusterIP   10.108.36.83    <none>        8200/TCP,8201/TCP        12m
+default       service/vault-agent-injector-svc   ClusterIP   10.109.212.67   <none>        443/TCP                  12m
+default       service/vault-internal             ClusterIP   None            <none>        8200/TCP,8201/TCP        12m
+default       service/vault-standby              ClusterIP   10.109.12.0     <none>        8200/TCP,8201/TCP        12m
+kube-system   service/kube-dns                   ClusterIP   10.96.0.10      <none>        53/UDP,53/TCP,9153/TCP   38m
+
+NAMESPACE     NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-system   daemonset.apps/kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   38m
+
+NAMESPACE     NAME                                   READY   UP-TO-DATE   AVAILABLE   AGE
+default       deployment.apps/vault-agent-injector   1/1     1            1           12m
+kube-system   deployment.apps/coredns                1/1     1            1           38m
+
+NAMESPACE     NAME                                              DESIRED   CURRENT   READY   AGE
+default       replicaset.apps/vault-agent-injector-5b75fd986d   1         1         1       12m
+kube-system   replicaset.apps/coredns-565d847f94                1         1         1       38m
+
+NAMESPACE   NAME                     READY   AGE
+default     statefulset.apps/vault   0/3     12m
+[anjack@110master vault]$
+
+
+[anjack@110master vault]$ minikube kubectl -- get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+vault-0                                 0/1     Running   0          15m
+vault-1                                 0/1     Running   0          15m
+vault-2                                 0/1     Running   0          15m
+vault-agent-injector-5b75fd986d-6wjvz   1/1     Running   0          15m
+[anjack@110master vault]$
+

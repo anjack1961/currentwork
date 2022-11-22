@@ -1,0 +1,94 @@
+Kubernetes 認証を構成する
+
+minikube kubectl --
+
+vault-0ポッドでインタラクティブ シェル セッションを開始します。
+minikube kubectl -- exec --stdin=true --tty=true vault-0 -- /bin/sh
+
+vault login
+
+Kubernetes 認証方法を有効にします。
+vault auth enable kubernetes
+
+Kubernetes API の場所を使用するように Kubernetes 認証方法を構成します。
+
+vault write auth/kubernetes/config \
+    kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443"
+
+path でシークレットwebappの機能を有効にするという名前のポリシーを書き出します。readsecret/data/webapp/config
+vault policy write webapp - <<EOF
+path "secret/data/webapp/config" {
+  capabilities = ["read"]
+}
+EOF
+
+webappKubernetes サービス アカウント名とwebappポリシーを関連付けるという名前の Kubernetes 認証ロールを作成します。
+vault write auth/kubernetes/role/webapp \
+        bound_service_account_names=vault \
+        bound_service_account_namespaces=default \
+        policies=webapp \
+        ttl=24h
+
+vault-0ポッドを終了します。
+exit
+
+
+
+[anjack@110master vault]$ minikube kubectl -- exec --stdin=true --tty=true vault-0 -- /bin/sh
+/ $ vault auth enable kubernetes
+Error enabling kubernetes auth: Error making API request.
+
+URL: POST http://127.0.0.1:8200/v1/sys/auth/kubernetes
+Code: 403. Errors:
+
+* permission denied
+/ $ vault login
+Token (will be hidden):
+Success! You are now authenticated. The token information displayed below
+is already stored in the token helper. You do NOT need to run "vault login"
+again. Future Vault requests will automatically use this token.
+
+Key                  Value
+---                  -----
+token                hvs.SevrBL3hVF9xHkwYOflV4GeR
+token_accessor       8L9O0UZksL3r4Ms7G38Fadqa
+token_duration       ∞
+token_renewable      false
+token_policies       ["root"]
+identity_policies    []
+policies             ["root"]
+/ $
+/ $
+/ $ vault auth enable kubernetes
+Success! Enabled kubernetes auth method at: kubernetes/
+/ $
+/ $
+/ $ vault write auth/kubernetes/config \
+>     kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443"
+Success! Data written to: auth/kubernetes/config
+/ $
+/ $
+/ $ vault policy write webapp - <<EOF
+> path "secret/data/webapp/config" {
+>   capabilities = ["read"]
+> }
+> EOF
+Success! Uploaded policy: webapp
+/ $ ls
+bin       etc       lib       media     opt       root      sbin      sys       usr       vault
+dev       home      licenses  mnt       proc      run       srv       tmp       var
+/ $
+/ $ vault write auth/kubernetes/role/webapp \
+>         bound_service_account_names=vault \
+>         bound_service_account_namespaces=default \
+>         policies=webapp \
+>         ttl=24h
+Success! Data written to: auth/kubernetes/role/webapp
+/ $
+/ $
+/ $ exit
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$
+

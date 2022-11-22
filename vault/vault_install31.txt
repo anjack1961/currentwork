@@ -1,0 +1,103 @@
+
+minikube start
+
+minikube status
+
+minikube kubectl -- get ns
+
+minikube kubectl -- get all -A
+
+[anjack@75maven ~]$ minikube start
+* Centos 7.9.2009 (amd64) 上の minikube v1.27.1
+* 既存のプロファイルを元に、docker ドライバーを使用します
+* minikube クラスター中のコントロールプレーンの minikube ノードを起動しています
+* ベースイメージを取得しています...
+! 'registry.k8s.io/kube-proxy:v1.25.2' イメージは見つかりませんでした (キャッシュに追加できません)。
+! 'gcr.io/k8s-minikube/storage-provisioner:v5' イメージは見つかりませんでした (キャッシュに追加できません)。
+! 'registry.k8s.io/kube-apiserver:v1.25.2' イメージは見つかりませんでした (キャッシュに追加できません)。
+! 'registry.k8s.io/etcd:3.5.4-0' イメージは見つかりませんでした (キャッシュに追加できません)。
+! 'registry.k8s.io/kube-controller-manager:v1.25.2' イメージは見つかりませんでした (キャッシュに追加できません)。
+! 'registry.k8s.io/coredns/coredns:v1.9.3' イメージは見つかりませんでした (キャッシュに追加できません)。
+! 'registry.k8s.io/kube-scheduler:v1.25.2' イメージは見つかりませんでした (キャッシュに追加できません)。
+! 'registry.k8s.io/pause:3.8' イメージは見つかりませんでした (キャッシュに追加できません)。
+E1122 10:03:56.754224    1320 cache.go:203] Error downloading kic artifacts:  failed to download kic base image or any fallback image
+* 「minikube」のために既存の docker container を再起動しています...
+* Docker 20.10.18 で Kubernetes v1.25.2 を準備しています...
+* Kubernetes コンポーネントを検証しています...
+  - gcr.io/k8s-minikube/storage-provisioner:v5 イメージを使用しています
+* 有効なアドオン: default-storageclass, storage-provisioner
+* kubectl が見つかりません。kubectl が必要な場合、'minikube kubectl -- get pods -A' を試してください
+* 終了しました！kubectl がデフォルトで「minikube」クラスターと「default」ネームスペースを使用するよう設定されました
+[anjack@75maven ~]$
+
+
+
+[anjack@75maven ~]$ minikube status
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+[anjack@75maven ~]$
+[anjack@75maven ~]$
+[anjack@75maven ~]$
+[anjack@75maven ~]$ minikube kubectl -- get ns
+NAME                          STATUS   AGE
+default                       Active   38d
+kube-node-lease               Active   38d
+kube-public                   Active   38d
+kube-system                   Active   38d
+sample-domain1-ns             Active   31d
+sample-weblogic-operator-ns   Active   32d
+traefik                       Active   31d
+[anjack@75maven ~]$
+[anjack@75maven ~]$
+[anjack@75maven ~]$ minikube kubectl -- get all -A
+NAMESPACE                     NAME                                        READY   STATUS     RESTARTS           AGE
+default                       pod/vault-0                                 1/1     Running    1 (6m15s ago)      3d18h
+default                       pod/vault-agent-injector-5b75fd986d-j592d   1/1     Running    1 (3d16h ago)      3d18h
+default                       pod/website-856c59bff9-lwvwn                0/2     Init:0/1   1                  3d16h
+kube-system                   pod/coredns-565d847f94-mrvkt                1/1     Running    6 (3d16h ago)      38d
+kube-system                   pod/etcd-minikube                           1/1     Running    5 (3d16h ago)      38d
+kube-system                   pod/kube-apiserver-minikube                 1/1     Running    5 (6m15s ago)      38d
+kube-system                   pod/kube-controller-manager-minikube        1/1     Running    8 (5m49s ago)      38d
+kube-system                   pod/kube-proxy-2ftv4                        1/1     Running    5 (3d16h ago)      38d
+kube-system                   pod/kube-scheduler-minikube                 1/1     Running    5 (3d16h ago)      38d
+kube-system                   pod/storage-provisioner                     1/1     Running    13 (5m34s ago)     38d
+sample-weblogic-operator-ns   pod/weblogic-operator-56f49f7b5f-xgrn4      0/1     Running    1859 (2m13s ago)   32d
+traefik                       pod/traefik-operator-8567cbb4b5-h47fj       1/1     Running    6 (3d16h ago)      31d
+
+NAMESPACE                     NAME                                     TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                        AGE
+default                       service/kubernetes                       ClusterIP      10.96.0.1        <none>        443/TCP                        38d
+default                       service/vault                            ClusterIP      10.98.45.197     <none>        8200/TCP,8201/TCP              3d18h
+default                       service/vault-agent-injector-svc         ClusterIP      10.99.231.55     <none>        443/TCP                        3d18h
+default                       service/vault-internal                   ClusterIP      None             <none>        8200/TCP,8201/TCP              3d18h
+kube-system                   service/kube-dns                         ClusterIP      10.96.0.10       <none>        53/UDP,53/TCP,9153/TCP         38d
+kube-system                   service/kube-prometheus-stack-kubelet    ClusterIP      None             <none>        10250/TCP,10255/TCP,4194/TCP   38d
+sample-weblogic-operator-ns   service/internal-weblogic-operator-svc   ClusterIP      10.106.103.118   <none>        8082/TCP                       32d
+traefik                       service/traefik-operator                 LoadBalancer   10.110.197.140   <pending>     80:30305/TCP,443:30443/TCP     31d
+
+NAMESPACE     NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-system   daemonset.apps/kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   38d
+
+NAMESPACE                     NAME                                   READY   UP-TO-DATE   AVAILABLE   AGE
+default                       deployment.apps/vault-agent-injector   1/1     1            1           3d18h
+default                       deployment.apps/website                0/1     1            0           3d16h
+kube-system                   deployment.apps/coredns                1/1     1            1           38d
+sample-weblogic-operator-ns   deployment.apps/weblogic-operator      0/1     1            0           32d
+traefik                       deployment.apps/traefik-operator       1/1     1            1           31d
+
+NAMESPACE                     NAME                                              DESIRED   CURRENT   READY   AGE
+default                       replicaset.apps/vault-agent-injector-5b75fd986d   1         1         1       3d18h
+default                       replicaset.apps/website-856c59bff9                1         1         0       3d16h
+kube-system                   replicaset.apps/coredns-565d847f94                1         1         1       38d
+sample-weblogic-operator-ns   replicaset.apps/weblogic-operator-56f49f7b5f      1         1         0       32d
+traefik                       replicaset.apps/traefik-operator-8567cbb4b5       1         1         1       31d
+
+NAMESPACE   NAME                     READY   AGE
+default     statefulset.apps/vault   1/1     3d18h
+[anjack@75maven ~]$
+
+

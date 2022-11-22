@@ -1,0 +1,167 @@
+
+minikube kubectl -- exec vault-0 -- vault operator init \
+    -key-shares=1 \
+    -key-threshold=1 \
+    -format=yaml
+
+VAULT_UNSEAL_KEYVault 開封キーをキャプチャする名前の変数を作成します。
+VAULT_UNSEAL_KEY="emgOQpieSkwnzxoSG+o7ewf7eCQK/5wEilQxySX1AHg="
+
+ポッドで実行されている Vault vault-0をアンシールします。
+minikube kubectl -- exec vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
+
+vault-1Pod を Raft クラスターに参加させます。
+minikube kubectl -- exec -ti vault-1 -- vault operator raft join http://vault-0.vault-internal:8200
+
+vault-2Pod を Raft クラスターに参加させます。
+minikube kubectl -- exec -ti vault-2 -- vault operator raft join http://vault-0.vault-internal:8200
+
+上記の開封キーを使用して、vault-1 を開封します。
+minikube kubectl -- exec -ti vault-1 -- vault operator unseal $VAULT_UNSEAL_KEY
+
+上記の開封キーを使用して、vault-2 を開封します。
+minikube kubectl -- exec -ti vault-2 -- vault operator unseal $VAULT_UNSEAL_KEY
+
+
+
+[anjack@110master vault]$ minikube kubectl -- exec vault-0 -- vault operator init \
+>     -key-shares=1 \
+>     -key-threshold=1 \
+>     -format=yaml
+recovery_keys_b64: []
+recovery_keys_hex: []
+recovery_keys_shares: 0
+recovery_keys_threshold: 0
+root_token: hvs.SevrBL3hVF9xHkwYOflV4GeR
+unseal_keys_b64:
+- emgOQpieSkwnzxoSG+o7ewf7eCQK/5wEilQxySX1AHg=
+unseal_keys_hex:
+- 7a680e42989e4a4c27cf1a121bea3b7b07fb78240aff9c048a5431c925f50078
+unseal_shares: 1
+unseal_threshold: 1
+[anjack@110master vault]$
+
+[anjack@110master vault]$ VAULT_UNSEAL_KEY="emgOQpieSkwnzxoSG+o7ewf7eCQK/5wEilQxySX1AHg="
+[anjack@110master vault]$ echo $VAULT_UNSEAL_KEY
+emgOQpieSkwnzxoSG+o7ewf7eCQK/5wEilQxySX1AHg=
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- exec vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
+Key                     Value
+---                     -----
+Seal Type               shamir
+Initialized             true
+Sealed                  false
+Total Shares            1
+Threshold               1
+Version                 1.12.0
+Build Date              2022-10-10T18:14:33Z
+Storage Type            raft
+Cluster Name            vault-cluster-9deb6e97
+Cluster ID              2caa7aed-959d-da57-88b7-1923eb7c33bc
+HA Enabled              true
+HA Cluster              n/a
+HA Mode                 standby
+Active Node Address     <none>
+Raft Committed Index    31
+Raft Applied Index      31
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+vault-0                                 1/1     Running   0          33m
+vault-1                                 0/1     Running   0          33m
+vault-2                                 0/1     Running   0          33m
+vault-agent-injector-5b75fd986d-6wjvz   1/1     Running   0          33m
+
+
+[anjack@110master vault]$ minikube kubectl -- exec -ti vault-1 -- vault operator raft join http://vault-0.vault-internal:8200
+Key       Value
+---       -----
+Joined    true
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- exec -ti vault-2 -- vault operator raft join http://vault-0.vault-internal:8200
+Key       Value
+---       -----
+Joined    true
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- get service
+NAME                       TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)             AGE
+kubernetes                 ClusterIP   10.96.0.1       <none>        443/TCP             66m
+vault                      ClusterIP   10.108.139.57   <none>        8200/TCP,8201/TCP   40m
+vault-active               ClusterIP   10.108.36.83    <none>        8200/TCP,8201/TCP   40m
+vault-agent-injector-svc   ClusterIP   10.109.212.67   <none>        443/TCP             40m
+vault-internal             ClusterIP   None            <none>        8200/TCP,8201/TCP   40m
+vault-standby              ClusterIP   10.109.12.0     <none>        8200/TCP,8201/TCP   40m
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+vault-0                                 1/1     Running   0          41m   172.17.0.4   minikube   <none>           <none>
+vault-1                                 0/1     Running   0          41m   172.17.0.5   minikube   <none>           <none>
+vault-2                                 0/1     Running   0          41m   172.17.0.6   minikube   <none>           <none>
+vault-agent-injector-5b75fd986d-6wjvz   1/1     Running   0          41m   172.17.0.3   minikube   <none>           <none>
+[anjack@110master vault]$
+
+[anjack@110master vault]$ minikube kubectl -- get service -o wide
+NAME                       TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)             AGE   SELECTOR
+kubernetes                 ClusterIP   10.96.0.1       <none>        443/TCP             68m   <none>
+vault                      ClusterIP   10.108.139.57   <none>        8200/TCP,8201/TCP   42m   app.kubernetes.io/instance=vault,app.kubernetes.io/name=vault,component=server
+vault-active               ClusterIP   10.108.36.83    <none>        8200/TCP,8201/TCP   42m   app.kubernetes.io/instance=vault,app.kubernetes.io/name=vault,component=server,vault-active=true
+vault-agent-injector-svc   ClusterIP   10.109.212.67   <none>        443/TCP             42m   app.kubernetes.io/instance=vault,app.kubernetes.io/name=vault-agent-injector,component=webhook
+vault-internal             ClusterIP   None            <none>        8200/TCP,8201/TCP   42m   app.kubernetes.io/instance=vault,app.kubernetes.io/name=vault,component=server
+vault-standby              ClusterIP   10.109.12.0     <none>        8200/TCP,8201/TCP   42m   app.kubernetes.io/instance=vault,app.kubernetes.io/name=vault,component=server,vault-active=false
+
+
+[anjack@110master vault]$ minikube kubectl -- exec -ti vault-1 -- vault operator unseal $VAULT_UNSEAL_KEY
+Key                Value
+---                -----
+Seal Type          shamir
+Initialized        true
+Sealed             true
+Total Shares       1
+Threshold          1
+Unseal Progress    0/1
+Unseal Nonce       n/a
+Version            1.12.0
+Build Date         2022-10-10T18:14:33Z
+Storage Type       raft
+HA Enabled         true
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- exec -ti vault-2 -- vault operator unseal $VAULT_UNSEAL_KEY
+Key                Value
+---                -----
+Seal Type          shamir
+Initialized        true
+Sealed             true
+Total Shares       1
+Threshold          1
+Unseal Progress    0/1
+Unseal Nonce       n/a
+Version            1.12.0
+Build Date         2022-10-10T18:14:33Z
+Storage Type       raft
+HA Enabled         true
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+vault-0                                 1/1     Running   0          53m   172.17.0.4   minikube   <none>           <none>
+vault-1                                 1/1     Running   0          53m   172.17.0.5   minikube   <none>           <none>
+vault-2                                 1/1     Running   0          53m   172.17.0.6   minikube   <none>           <none>
+vault-agent-injector-5b75fd986d-6wjvz   1/1     Running   0          53m   172.17.0.3   minikube   <none>           <none>
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- get service -o wide
+NAME                       TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)             AGE   SELECTOR
+kubernetes                 ClusterIP   10.96.0.1       <none>        443/TCP             79m   <none>
+vault                      ClusterIP   10.108.139.57   <none>        8200/TCP,8201/TCP   53m   app.kubernetes.io/instance=vault,app.kubernetes.io/name=vault,component=server
+vault-active               ClusterIP   10.108.36.83    <none>        8200/TCP,8201/TCP   53m   app.kubernetes.io/instance=vault,app.kubernetes.io/name=vault,component=server,vault-active=true
+vault-agent-injector-svc   ClusterIP   10.109.212.67   <none>        443/TCP             53m   app.kubernetes.io/instance=vault,app.kubernetes.io/name=vault-agent-injector,component=webhook
+vault-internal             ClusterIP   None            <none>        8200/TCP,8201/TCP   53m   app.kubernetes.io/instance=vault,app.kubernetes.io/name=vault,component=server
+vault-standby              ClusterIP   10.109.12.0     <none>        8200/TCP,8201/TCP   53m   app.kubernetes.io/instance=vault,app.kubernetes.io/name=vault,component=server,vault-active=false
+[anjack@110master vault]$
+[anjack@110master vault]$
+

@@ -1,0 +1,54 @@
+
+minikube kubectl -- delete --filename deployment-01-webapp.yml
+
+minikube kubectl -- get pods -o wide
+
+helm uninstall vault
+
+
+
+[anjack@110master vault]$ ls
+deployment-01-webapp.yml  helm-vault-raft-values.yml
+[anjack@110master vault]$ minikube kubectl -- delete --filename deployment-01-webapp.yml
+deployment.apps "webapp" deleted
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+NAME                                    READY   STATUS    RESTARTS        AGE    IP           NODE       NOMINATED NODE   READINESS GATES
+vault-0                                 1/1     Running   0               3h1m   172.17.0.4   minikube   <none>           <none>
+vault-1                                 1/1     Running   0               3h1m   172.17.0.5   minikube   <none>           <none>
+vault-2                                 1/1     Running   0               3h1m   172.17.0.6   minikube   <none>           <none>
+vault-agent-injector-5b75fd986d-6wjvz   1/1     Running   1 (8m29s ago)   3h1m   172.17.0.3   minikube   <none>           <none>
+[anjack@110master vault]$ helm uninstall vault hashicorp/vault
+release "vault" uninstalled
+Error: uninstall: Release name is invalid: hashicorp/vault
+[anjack@110master vault]$ helm uninstall vault
+Error: uninstall: Release not loaded: vault: release: not found
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+No resources found in default namespace.
+[anjack@110master vault]$
+[anjack@110master vault]$ minikube kubectl -- get all -A
+NAMESPACE     NAME                                   READY   STATUS    RESTARTS        AGE
+kube-system   pod/coredns-565d847f94-w6l4s           1/1     Running   0               3h29m
+kube-system   pod/etcd-minikube                      1/1     Running   0               3h29m
+kube-system   pod/kube-apiserver-minikube            1/1     Running   0               3h29m
+kube-system   pod/kube-controller-manager-minikube   1/1     Running   0               3h29m
+kube-system   pod/kube-proxy-wz5w2                   1/1     Running   0               3h29m
+kube-system   pod/kube-scheduler-minikube            1/1     Running   0               3h29m
+kube-system   pod/storage-provisioner                1/1     Running   1 (3h29m ago)   3h29m
+
+NAMESPACE     NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
+default       service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP                  3h29m
+kube-system   service/kube-dns     ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   3h29m
+
+NAMESPACE     NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-system   daemonset.apps/kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   3h29m
+
+NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+kube-system   deployment.apps/coredns   1/1     1            1           3h29m
+
+NAMESPACE     NAME                                 DESIRED   CURRENT   READY   AGE
+kube-system   replicaset.apps/coredns-565d847f94   1         1         1       3h29m
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$
+[anjack@110master vault]$
+

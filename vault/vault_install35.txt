@@ -1,0 +1,103 @@
+Vault でシークレットを設定する
+
+[anjack@110master vault]$ minikube kubectl -- exec vault-0 -- vault operator init \
+>     -key-shares=1 \
+>     -key-threshold=1 \
+>     -format=yaml
+recovery_keys_b64: []
+recovery_keys_hex: []
+recovery_keys_shares: 0
+recovery_keys_threshold: 0
+root_token: hvs.SevrBL3hVF9xHkwYOflV4GeR
+unseal_keys_b64:
+- emgOQpieSkwnzxoSG+o7ewf7eCQK/5wEilQxySX1AHg=
+unseal_keys_hex:
+- 7a680e42989e4a4c27cf1a121bea3b7b07fb78240aff9c048a5431c925f50078
+unseal_shares: 1
+unseal_threshold: 1
+
+minikube kubectl --
+
+vault-0ポッドでインタラクティブ シェル セッションを開始します。
+minikube kubectl -- exec --stdin=true --tty=true vault-0 -- /bin/sh
+
+プロンプトが表示されたら、ルート トークンを使用してログインします。
+root_token: 
+hvs.SevrBL3hVF9xHkwYOflV4GeR
+
+vault login
+
+パスで kv-v2 シークレット エンジンのインスタンスを有効にしますsecret。
+vault secrets enable -path=secret kv-v2
+
+と secret/webapp/configを使用して path にシークレットを作成します。usernamepassword
+vault kv put secret/webapp/config username="static-user" password="static-password"
+
+シークレットがパスで定義されていることを確認しますsecret/webapp/config。
+vault kv get secret/webapp/config
+
+vault-0ポッドを終了します。
+exit
+
+
+[anjack@110master vault]$ minikube kubectl -- exec --stdin=true --tty=true vault-0 -- /bin/sh
+/ $ vault login
+Token (will be hidden):
+Success! You are now authenticated. The token information displayed below
+is already stored in the token helper. You do NOT need to run "vault login"
+again. Future Vault requests will automatically use this token.
+
+Key                  Value
+---                  -----
+token                hvs.SevrBL3hVF9xHkwYOflV4GeR
+token_accessor       8L9O0UZksL3r4Ms7G38Fadqa
+token_duration       ∞
+token_renewable      false
+token_policies       ["root"]
+identity_policies    []
+policies             ["root"]
+/ $
+/ $
+/ $ vault secrets enable -path=secret kv-v2
+Success! Enabled the kv-v2 secrets engine at: secret/
+/ $
+/ $
+/ $ vault kv put secret/webapp/config username="static-user" password="static-password"
+====== Secret Path ======
+secret/data/webapp/config
+
+======= Metadata =======
+Key                Value
+---                -----
+created_time       2022-11-22T04:34:18.147392032Z
+custom_metadata    <nil>
+deletion_time      n/a
+destroyed          false
+version            1
+/ $
+/ $
+/ $ vault kv get secret/webapp/config
+====== Secret Path ======
+secret/data/webapp/config
+
+======= Metadata =======
+Key                Value
+---                -----
+created_time       2022-11-22T04:34:18.147392032Z
+custom_metadata    <nil>
+deletion_time      n/a
+destroyed          false
+version            1
+
+====== Data ======
+Key         Value
+---         -----
+password    static-password
+username    static-user
+/ $
+/ $
+/ $ exit
+[anjack@110master vault]$
+
+
+
