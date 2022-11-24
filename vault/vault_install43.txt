@@ -1,0 +1,57 @@
+アノテーション付きポッド
+
+アプリケーションのポッド定義を表示しpayrollます。
+
+pod-payroll.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: payroll
+  labels:
+    app: payroll
+  annotations:
+    vault.hashicorp.com/agent-inject: 'true'
+    vault.hashicorp.com/role: 'internal-app'
+    vault.hashicorp.com/agent-inject-secret-database-config.txt: 'internal/data/database/config'
+    vault.hashicorp.com/agent-inject-template-database-config.txt: |
+      {{- with secret "internal/data/database/config" -}}
+      postgresql://{{ .Data.data.username }}:{{ .Data.data.password }}@postgres:5432/wizard
+      {{- end -}}
+spec:
+  serviceAccountName: internal-app
+  containers:
+    - name: payroll
+      image: jweissig/app:0.0.1
+
+で定義されたポッドを適用しpod-payroll.yamlます。
+minikube kubectl -- apply --filename pod-payroll.yaml
+
+[anjack@110master vault]$ minikube kubectl -- apply --filename pod-payroll.yaml
+pod/payroll created
+
+
+デフォルトの名前空間にあるすべてのポッドを取得します。
+minikube kubectl -- get pods -o wide
+
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+orgchart-696cf797b5-88v5n               2/2     Running   0          4m17s   172.17.0.5   minikube   <none>           <none>
+payroll                                 2/2     Running   0          19s     172.17.0.6   minikube   <none>           <none>
+vault-0                                 1/1     Running   0          14m     172.17.0.4   minikube   <none>           <none>
+vault-agent-injector-5b75fd986d-b6w7z   1/1     Running   0          14m     172.17.0.3   minikube   <none>           <none>
+
+
+最後に、ポッド内のpayrollコンテナーに書き込まれたシークレットを表示します。payroll
+minikube kubectl -- exec \
+    payroll \
+    --container payroll -- cat /vault/secrets/database-config.txt
+
+[anjack@110master vault]$ minikube kubectl -- exec \
+>     payroll \
+>     --container payroll -- cat /vault/secrets/database-config.txt
+postgresql://db-readonly-username:db-secret-password@postgres:5432/wizard[anjack@110master vault]$
+
+
+
+

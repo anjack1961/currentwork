@@ -1,0 +1,331 @@
+Vault Agent コンテナーを介して Kubernetes Pod に Secret を注入する
+https://developer.hashicorp.com/vault/tutorials/kubernetes/kubernetes-sidecar
+
+
+開発モードで実行されている Vault サーバーの最新バージョンをインストールします。
+helm install vault hashicorp/vault --set "server.dev.enabled=true"
+
+[anjack@110master vault]$ helm install vault hashicorp/vault --set "server.dev.enabled=true"
+NAME: vault
+LAST DEPLOYED: Thu Nov 24 09:38:14 2022
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+NOTES:
+Thank you for installing HashiCorp Vault!
+
+Now that you have deployed Vault, you should look over the docs on using
+Vault with Kubernetes available here:
+
+https://www.vaultproject.io/docs/
+
+
+Your release is named vault. To learn more about the release, try:
+
+  $ helm status vault
+  $ helm get manifest vault
+[anjack@110master vault]$
+
+
+Vault ポッドと Vault Agent Injector ポッドは、デフォルトの名前空間にデプロイされます。
+デフォルトの名前空間にあるすべてのポッドを表示します。
+minikube kubectl -- get pods -o wide
+
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+vault-0                                 1/1     Running   0          21s   172.17.0.4   minikube   <none>           <none>
+vault-agent-injector-5b75fd986d-b6w7z   1/1     Running   0          22s   172.17.0.3   minikube   <none>           <none>
+
+
+Vault でシークレットを設定する
+minikube kubectl -- exec -it vault-0 -- /bin/sh
+
+[anjack@110master vault]$ minikube kubectl -- exec -it vault-0 -- /bin/sh
+/ $
+
+path で kv-v2 シークレットを有効にしますinternal。
+vault secrets enable -path=internal kv-v2
+
+/ $ vault secrets enable -path=internal kv-v2
+Success! Enabled the kv-v2 secrets engine at: internal/
+
+
+と internal/database/configを使用して path にシークレットを作成します。usernamepassword
+vault kv put internal/database/config username="db-readonly-username" password="db-secret-password"
+
+/ $ vault kv put internal/database/config username="db-readonly-username" password="db-secret-password"
+======== Secret Path ========
+internal/data/database/config
+
+======= Metadata =======
+Key                Value
+---                -----
+created_time       2022-11-24T00:40:16.104731578Z
+custom_metadata    <nil>
+deletion_time      n/a
+destroyed          false
+version            1
+/ $
+
+
+シークレットがパスで定義されていることを確認しますinternal/database/config。
+vault kv get internal/database/config
+
+/ $ vault kv get internal/database/config
+======== Secret Path ========
+internal/data/database/config
+
+======= Metadata =======
+Key                Value
+---                -----
+created_time       2022-11-24T00:40:16.104731578Z
+custom_metadata    <nil>
+deletion_time      n/a
+destroyed          false
+version            1
+
+====== Data ======
+Key         Value
+---         -----
+password    db-secret-password
+username    db-readonly-username
+
+最後に、vault-0ポッドを終了します。
+exit
+
+/ $ exit
+[anjack@110master vault]$
+
+
+
+Kubernetes 認証を構成する
+
+vault-0ポッドでインタラクティブ シェル セッションを開始します。
+minikube kubectl -- exec --stdin=true --tty=true vault-0 -- /bin/sh
+[anjack@110master vault]$ minikube kubectl -- exec --stdin=true --tty=true vault-0 -- /bin/sh
+/ $
+
+
+Kubernetes 認証方法を有効にします。
+vault auth enable kubernetes
+
+/ $ vault auth enable kubernetes
+Success! Enabled kubernetes auth method at: kubernetes/
+
+
+Kubernetes API の場所を使用するように Kubernetes 認証方法を構成します。
+
+vault write auth/kubernetes/config \
+    kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443"
+
+/ $ vault write auth/kubernetes/config \
+>     kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443"
+Success! Data written to: auth/kubernetes/config
+/ $
+
+
+path でシークレットinternal-appの機能を有効にするという名前のポリシーを書き出します。readinternal/data/database/config
+vault policy write internal-app - <<EOF
+path "internal/data/database/config" {
+  capabilities = ["read"]
+}
+EOF
+
+/ $ vault policy write internal-app - <<EOF
+> path "internal/data/database/config" {
+>   capabilities = ["read"]
+> }
+> EOF
+Success! Uploaded policy: internal-app
+
+という名前の Kubernetes 認証ロールを作成しますinternal-app。
+vault write auth/kubernetes/role/internal-app \
+    bound_service_account_names=internal-app \
+    bound_service_account_namespaces=default \
+    policies=internal-app \
+    ttl=24h
+
+/ $ vault write auth/kubernetes/role/internal-app \
+>     bound_service_account_names=internal-app \
+>     bound_service_account_namespaces=default \
+>     policies=internal-app \
+>     ttl=24h
+Success! Data written to: auth/kubernetes/role/internal-app
+
+
+vault-0ポッドを終了します。
+exit
+
+/ $ exit
+[anjack@110master vault]$
+
+
+Kubernetes サービス アカウントを定義する
+
+デフォルトの名前空間にあるすべてのサービス アカウントを取得します。
+minikube kubectl -- get serviceaccounts
+
+[anjack@110master vault]$ minikube kubectl -- get serviceaccounts
+NAME                   SECRETS   AGE
+default                0         47h
+vault                  0         8m51s
+vault-agent-injector   0         8m51s
+[anjack@110master vault]$
+
+
+internal-appデフォルトの名前空間で指定された Kubernetes サービス アカウントを作成します。
+minikube kubectl -- create sa internal-app
+
+[anjack@110master vault]$ minikube kubectl -- create sa internal-app
+serviceaccount/internal-app created
+
+
+サービス アカウントが作成されたことを確認します。
+minikube kubectl -- get serviceaccounts
+
+[anjack@110master vault]$ minikube kubectl -- get serviceaccounts
+NAME                   SECRETS   AGE
+default                0         47h
+internal-app           0         19s
+vault                  0         9m36s
+vault-agent-injector   0         9m36s
+[anjack@110master vault]$
+
+
+アプリケーションを起動する
+
+deployment-orgchart.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orgchart
+  labels:
+    app: orgchart
+spec:
+  selector:
+    matchLabels:
+      app: orgchart
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+      labels:
+        app: orgchart
+    spec:
+      serviceAccountName: internal-app
+      containers:
+        - name: orgchart
+          image: jweissig/app:0.0.1
+
+で定義した配置を適用しdeployment-orgchart.yamlます。
+minikube kubectl -- apply --filename deployment-orgchart.yaml
+
+[anjack@110master vault]$ minikube kubectl -- apply --filename deployment-orgchart.yaml
+deployment.apps/orgchart created
+
+
+デフォルトの名前空間にあるすべてのポッドを取得します。
+minikube kubectl -- get pods -o wide
+
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+orgchart-556b97f789-8vm82               1/1     Running   0          19s     172.17.0.5   minikube   <none>           <none>
+vault-0                                 1/1     Running   0          5m30s   172.17.0.4   minikube   <none>           <none>
+vault-agent-injector-5b75fd986d-b6w7z   1/1     Running   0          5m31s   172.17.0.3   minikube   <none>           <none>
+
+
+orgchartポッド内のコンテナーに シークレットが書き込まれていないことを確認しorgchartます。
+minikube kubectl -- exec \
+    $(minikube kubectl -- get pod -l app=orgchart -o jsonpath="{.items[0].metadata.name}") \
+    --container orgchart -- ls /vault/secrets
+
+[anjack@110master vault]$ minikube kubectl -- exec \
+>     $(minikube kubectl -- get pod -l app=orgchart -o jsonpath="{.items[0].metadata.name}") \
+>     --container orgchart -- ls /vault/secrets
+ls: /vault/secrets: No such file or directory
+command terminated with exit code 1
+
+
+シークレットをポッドに注入する
+
+patch-inject-secrets.yaml
+
+spec:
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/role: 'internal-app'
+        vault.hashicorp.com/agent-inject-secret-database-config.txt: 'internal/data/database/config'
+
+これらの 注釈 は、デプロイメント スキーマの部分構造を定義し、接頭辞として vault.hashicorp.com.
+
+agent-inject : Vault Agent Injector サービスを有効にします
+role : Vault Kubernetes 認証ロールです
+agent-inject-secret-FILEPATHdatabase-config.txt : ディレクトリに書き込まれるファイルのパスの前に付けます /vault/secrets。値は、Vault で定義されたシークレットへのパスです。
+
+
+orgchartで定義されたデプロイメントにパッチを適用しpatch-inject-secrets.yamlます。
+minikube kubectl -- patch deployment orgchart --patch "$(cat patch-inject-secrets.yaml)"
+
+[anjack@110master vault]$ minikube kubectl -- patch deployment orgchart --patch "$(cat patch-inject-secrets.yaml)"
+deployment.apps/orgchart patched
+
+デフォルトの名前空間にあるすべてのポッドを取得します。
+minikube kubectl -- get pods -o wide
+minikube kubectl -- get pods --watch
+
+[anjack@110master vault]$ minikube kubectl -- get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+orgchart-647c54957f-mk9nj               2/2     Running   0          11s     172.17.0.6   minikube   <none>           <none>
+vault-0                                 1/1     Running   0          6m39s   172.17.0.4   minikube   <none>           <none>
+vault-agent-injector-5b75fd986d-b6w7z   1/1     Running   0          6m40s   172.17.0.3   minikube   <none>           <none>
+
+vault-agent新しいorgchartポッドでコンテナーのログを表示します。
+minikube kubectl -- logs \
+    $(minikube kubectl -- get pod -l app=orgchart -o jsonpath="{.items[0].metadata.name}") \
+    --container vault-agent
+
+[anjack@110master vault]$ minikube kubectl -- logs \
+>     $(minikube kubectl -- get pod -l app=orgchart -o jsonpath="{.items[0].metadata.name}") \
+>     --container vault-agent
+2022-11-24T01:12:49.180Z [INFO]  sink.file: creating file sink
+2022-11-24T01:12:49.181Z [INFO]  sink.file: file sink configured: path=/home/vault/.vault-token mode=-rw-r-----
+==> Vault agent started! Log data will stream in below:
+
+==> Vault agent configuration:
+
+                     Cgo: disabled
+               Log Level: info
+                 Version: Vault v1.12.0, built 2022-10-10T18:14:33Z
+             Version Sha: 558abfa75702b5dab4c98e86b802fb9aef43b0eb
+
+2022-11-24T01:12:49.181Z [INFO]  template.server: starting template server
+2022-11-24T01:12:49.181Z [INFO]  auth.handler: starting auth handler
+2022-11-24T01:12:49.181Z [INFO] (runner) creating new runner (dry: false, once: false)
+2022-11-24T01:12:49.181Z [INFO]  auth.handler: authenticating
+2022-11-24T01:12:49.181Z [INFO]  sink.server: starting sink server
+2022-11-24T01:12:49.182Z [INFO] (runner) creating watcher
+2022-11-24T01:12:49.187Z [INFO]  auth.handler: authentication successful, sending token to sinks
+2022-11-24T01:12:49.187Z [INFO]  auth.handler: starting renewal process
+2022-11-24T01:12:49.187Z [INFO]  sink.file: token written: path=/home/vault/.vault-token
+2022-11-24T01:12:49.187Z [INFO]  template.server: template server received new token
+2022-11-24T01:12:49.187Z [INFO] (runner) stopping
+2022-11-24T01:12:49.187Z [INFO] (runner) creating new runner (dry: false, once: false)
+2022-11-24T01:12:49.187Z [INFO] (runner) creating watcher
+2022-11-24T01:12:49.188Z [INFO] (runner) starting
+2022-11-24T01:12:49.190Z [INFO]  auth.handler: renewed auth token
+
+最後に、orgchartコンテナに書き込まれたシークレットを表示します。
+minikube kubectl -- exec \
+    $(minikube kubectl -- get pod -l app=orgchart -o jsonpath="{.items[0].metadata.name}") \
+    --container orgchart -- cat /vault/secrets/database-config.txt
+
+[anjack@110master vault]$ minikube kubectl -- exec \
+>     $(minikube kubectl -- get pod -l app=orgchart -o jsonpath="{.items[0].metadata.name}") \
+>     --container orgchart -- cat /vault/secrets/database-config.txt
+data: map[password:db-secret-password username:db-readonly-username]
+metadata: map[created_time:2022-11-24T01:07:45.098566006Z custom_metadata:<nil> deletion_time: destroyed:false version:1]
+
+
