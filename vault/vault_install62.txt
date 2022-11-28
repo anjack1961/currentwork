@@ -1,0 +1,258 @@
+Vault Installation to Minikube via Helm with TLS enabled
+TLS が有効な Helm を介した Minikube への Vault のインストール
+https://developer.hashicorp.com/vault/tutorials/kubernetes/kubernetes-minikube-tls
+
+Create the certificate
+
+1. create a working directory
+$ mkdir /tmp/vault
+
+2. Export the working directory location and the naming variables.
+$ export VAULT_K8S_NAMESPACE="vault" \
+> export VAULT_HELM_RELEASE_NAME="vault" \
+> export VAULT_SERVICE_NAME="vault-internal" \
+> export K8S_CLUSTER_NAME="cluster.local" \
+> export WORKDIR=/tmp/vault
+
+3. Generate the private key
+$ openssl genrsa -out ${WORKDIR}/vault.key 2048
+Generating RSA private key, 2048 bit long modulus (2 primes)
+...............+++++
+...........................................................................................................+++++
+e is 65537 (0x010001)
+
+Create the Certificate Signing Request (CSR).
+
+1. Create the CSR configuration file
+cat > ${WORKDIR}/vault-csr.conf <<EOF
+[req]
+default_bits = 2048
+prompt = no
+encrypt_key = yes
+default_md = sha256
+distinguished_name = kubelet_serving
+req_extensions = v3_req
+[ kubelet_serving ]
+O = system:nodes
+CN = system:node:*.${VAULT_HELM_RELEASE_NAME}.svc.${K8S_CLUSTER_NAME}
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment, dataEncipherment
+extendedKeyUsage = serverAuth, clientAuth
+subjectAltName = @alt_names
+[alt_names]
+DNS.1 = *.${VAULT_SERVICE_NAME}
+DNS.2 = *.${VAULT_SERVICE_NAME}.${VAULT_HELM_RELEASE_NAME}.svc.${K8S_CLUSTER_NAME}
+DNS.3 = *.${VAULT_HELM_RELEASE_NAME}
+IP.1 = 127.0.0.1
+EOF
+
+2. Generate the CSR
+openssl req -new -key ${WORKDIR}/vault.key -out ${WORKDIR}/vault.csr -config ${WORKDIR}/vault-csr.conf
+
+
+Issue the Certificate.
+
+1. Create the csr yaml file to send it to Kubernetes.
+cat > ${WORKDIR}/csr.yaml <<EOF
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+   name: vault.svc
+spec:
+   signerName: kubernetes.io/kubelet-serving
+   expirationSeconds: 8640000
+   request: $(cat ${WORKDIR}/vault.csr|base64|tr -d '\n')
+   usages:
+   - digital signature
+   - key encipherment
+   - server auth
+EOF
+
+2. Send the CSR to Kubernetes
+minikube kubectl -- create -f ${WORKDIR}/csr.yaml
+
+3. Approve the CSR in Kubernetes.
+minikube kubectl -- certificate approve vault.svc
+
+4. Confirm the certificate was issued
+minikube kubectl -- get csr vault.svc
+
+
+Store the certificates and Key in the Kubernetes secrets store
+1. Retrieve the certificate
+minikube kubectl -- get csr vault.svc -o jsonpath='{.status.certificate}' | openssl base64 -d -A -out ${WORKDIR}/vault.crt
+
+2. Retrieve Kubernetes CA certificate
+minikube kubectl -- config view \
+--raw \
+--minify \
+--flatten \
+-o jsonpath='{.clusters[].cluster.certificate-authority-data}' \
+| base64 -d > ${WORKDIR}/vault.ca
+
+3. Create the Kubernetes namespace
+minikube kubectl -- create namespace $VAULT_K8S_NAMESPACE
+
+4. Create the TLS secret
+minikube kubectl -- create secret generic vault-ha-tls \
+   -n $VAULT_K8S_NAMESPACE \
+   --from-file=vault.key=${WORKDIR}/vault.key \
+   --from-file=vault.crt=${WORKDIR}/vault.crt \
+   --from-file=vault.ca=${WORKDIR}/vault.ca
+
+
+Deploy the vault cluster via helm with overrides
+
+1. Create the overrides.yaml file.
+cat > ${WORKDIR}/overrides.yaml <<EOF
+global:
+   enabled: true
+   tlsDisable: false
+injector:
+   enabled: true
+server:
+   extraEnvironmentVars:
+      VAULT_CACERT: /vault/userconfig/vault-ha-tls/vault.ca
+      VAULT_TLSCERT: /vault/userconfig/vault-ha-tls/vault.crt
+      VAULT_TLSKEY: /vault/userconfig/vault-ha-tls/vault.key
+   volumes:
+      - name: userconfig-vault-ha-tls
+        secret:
+         defaultMode: 420
+         secretName: vault-ha-tls
+   volumeMounts:
+      - mountPath: /vault/userconfig/vault-ha-tls
+        name: userconfig-vault-ha-tls
+        readOnly: true
+   standalone:
+      enabled: false
+   affinity: ""
+   ha:
+      enabled: true
+      replicas: 3
+      raft:
+         enabled: true
+         setNodeId: true
+         config: |
+            ui = true
+            listener "tcp" {
+               tls_disable = 0
+               address = "[::]:8200"
+               cluster_address = "[::]:8201"
+               tls_cert_file = "/vault/userconfig/vault-ha-tls/vault.crt"
+               tls_key_file  = "/vault/userconfig/vault-ha-tls/vault.key"
+               tls_client_ca_file = "/vault/userconfig/vault-ha-tls/vault.ca"
+            }
+            storage "raft" {
+               path = "/vault/data"
+            }
+            disable_mlock = true
+            service_registration "kubernetes" {}
+EOF
+
+2. Deploy the Cluster
+helm install -n $VAULT_K8S_NAMESPACE $VAULT_HELM_RELEASE_NAME hashicorp/vault -f ${WORKDIR}/overrides.yaml
+
+3. Display the pods in the namespace that we created for vault
+minikube kubectl -- -n $VAULT_K8S_NAMESPACE get pods
+
+4. Initialize vault-0 with one key share and one key threshold.
+minikube kubectl -- exec -n $VAULT_K8S_NAMESPACE vault-0 -- vault operator init \
+    -key-shares=1 \
+    -key-threshold=1 \
+    -format=json > ${WORKDIR}/cluster-keys.json
+
+5. Display the unseal key found in cluster-keys.json.
+jq -r ".unseal_keys_b64[]" ${WORKDIR}/cluster-keys.json
+
+6. Create a variable named VAULT_UNSEAL_KEY to capture the Vault unseal key.
+VAULT_UNSEAL_KEY=$(jq -r ".unseal_keys_b64[]" ${WORKDIR}/cluster-keys.json)
+
+7. Unseal Vault running on the vault-0 pod.
+minikube kubectl -- exec -n $VAULT_K8S_NAMESPACE vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
+
+
+Join vault-1 and vault2 pods to the Raft cluster
+
+1. Start an interactive shell session on the vault-1 pod.
+minikube kubectl -- exec -n $VAULT_K8S_NAMESPACE -it vault-1 -- /bin/sh
+
+2. Join the vault-1 pod to the Raft cluster.
+vault operator raft join -address=https://vault-1.vault-internal:8200 -leader-ca-cert="$(cat /vault/userconfig/vault-ha-tls/vault.ca)" -leader-client-cert="$(cat /vault/userconfig/vault-ha-tls/vault.crt)" -leader-client-key="$(cat /vault/userconfig/vault-ha-tls/vault.key)" https://vault-0.vault-internal:8200
+
+3. Exit the vault-1 pod.
+exit
+
+4. Unseal vault-1.
+minikube kubectl -- exec -n $VAULT_K8S_NAMESPACE -ti vault-1 -- vault operator unseal $VAULT_UNSEAL_KEY
+
+5. Start an interactive shell session on the vault-2 pod.
+minikube kubectl -- exec -n $VAULT_K8S_NAMESPACE -it vault-2 -- /bin/sh
+
+6.Join the vault-2 pod to the Raft cluster.
+vault operator raft join -address=https://vault-2.vault-internal:8200 -leader-ca-cert="$(cat /vault/userconfig/vault-ha-tls/vault.ca)" -leader-client-cert="$(cat /vault/userconfig/vault-ha-tls/vault.crt)" -leader-client-key="$(cat /vault/userconfig/vault-ha-tls/vault.key)" https://vault-0.vault-internal:8200
+
+7. Exit the vault-2 pod.
+exit
+
+8. Unseal vault-2.
+minikube kubectl -- exec -n $VAULT_K8S_NAMESPACE -ti vault-2 -- vault operator unseal $VAULT_UNSEAL_KEY
+
+9. Export the cluster root token
+export CLUSTER_ROOT_TOKEN=$(cat ${WORKDIR}/cluster-keys.json | jq -r ".root_token")
+
+10. Login to vault-0 with the root token
+minikube kubectl -- exec -n $VAULT_K8S_NAMESPACE vault-0 -- vault login $CLUSTER_ROOT_TOKEN
+
+11. List the raft peers.
+minikube kubectl -- exec -n $VAULT_K8S_NAMESPACE vault-0 -- vault operator raft list-peers
+
+12. Print the HA status
+minikube kubectl -- exec -n $VAULT_K8S_NAMESPACE vault-0 -- vault status
+
+
+Create a secret
+
+1. Start an interactive shell session on the vault-0 pod.
+minikube kubectl -- exec -n $VAULT_K8S_NAMESPACE -it vault-0 -- /bin/sh
+
+2. Enable the kv-v2 secrets engine
+vault secrets enable -path=secret kv-v2
+
+3. Create a secret at the path secret/tls/apitest with a username and a password
+vault kv put secret/tls/apitest username="apiuser" password="supersecret"
+
+4. Verify that the secret is defined at the path secret/tls/apitest
+vault kv get secret/tls/apitest
+
+5. Exit the vault-0 pod.
+exit
+
+
+Expose the vault service and and retrieve the secret via the API
+
+1. Confirm the Vault service configuration
+minikube kubectl -- -n $VAULT_K8S_NAMESPACE get service vault
+
+2. In another terminal, port forward the vault service.
+minikube kubectl -- -n vault port-forward service/vault 8200:8200
+[anjack@110master vault]$ minikube kubectl -- -n vault port-forward service/vault 8200:8200
+Forwarding from 127.0.0.1:8200 -> 8200
+Forwarding from [::1]:8200 -> 8200
+
+
+Handling connection for 8200
+
+3. In the original terminal, perform a HTTPS curl request to retrieve the secret we created in the previous section.
+curl --cacert $WORKDIR/vault.ca \
+   --header "X-Vault-Token: $CLUSTER_ROOT_TOKEN" \
+   https://127.0.0.1:8200/v1/secret/data/tls/apitest | jq .data.data
+
+
+
+
+
+
+
+
