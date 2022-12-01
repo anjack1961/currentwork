@@ -1,0 +1,196 @@
+
+1. 名前空間の作成
+①名前空間の確認
+$  kubectl get ns
+NAME              STATUS   AGE
+default           Active   260d
+kube-node-lease   Active   260d
+kube-public       Active   260d
+kube-system       Active   260d
+
+②名前空間svctestの作成
+$ kubectl create ns svctest
+namespace/svctest created
+
+③名前空間svctestの確認
+$ kubectl get ns svctest
+NAME      STATUS   AGE
+svctest   Active   23m
+
+2. Serviceの作成
+①Service nginx-serviceの作成
+$ cat nginx_service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  labels:
+    app: nginx
+spec:
+  ports:
+  - port: 8080
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: nginx
+
+$ kubectl apply -n svctest -f nginx_service.yaml
+service/nginx-service created
+
+②Service nginx-serviceの確認
+$ kubectl get -n svctest all
+NAME                    TYPE        CLUSTER-IP        EXTERNAL-IP   PORT(S)    AGE
+service/nginx-service   ClusterIP   192.168.200.125   <none>        8080/TCP   62s
+
+$ kubectl describe -n svctest service/nginx-service
+Name:              nginx-service
+Namespace:         svctest
+Labels:            app=nginx
+Annotations:       <none>
+Selector:          app=nginx
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                192.168.200.125
+IPs:               192.168.200.125
+Port:              <unset>  8080/TCP
+TargetPort:        80/TCP
+Endpoints:         <none>
+Session Affinity:  None
+Events:            <none>
+
+$ curl 192.168.200.125:8080 -I
+curl: (7) Failed connect to 192.168.200.125:8080; 接続を拒否されました
+
+3. Deploymentの作成
+①Deployment nginx-deploymentの作成
+$ cat nginx_deploy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+
+$ kubectl apply -n svctest -f nginx_deploy.yaml
+deployment.apps/nginx-deployment created
+
+②Deployment nginx-deploymentの確認
+$ kubectl get -n svctest all
+NAME                                   READY   STATUS    RESTARTS   AGE
+pod/nginx-deployment-9456bbbf9-9mlzw   1/1     Running   0          9s
+pod/nginx-deployment-9456bbbf9-zwzqz   1/1     Running   0          9s
+
+NAME                    TYPE        CLUSTER-IP        EXTERNAL-IP   PORT(S)    AGE
+service/nginx-service   ClusterIP   192.168.200.125   <none>        8080/TCP   3m7s
+
+NAME                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/nginx-deployment   2/2     2            2           9s
+
+NAME                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/nginx-deployment-9456bbbf9   2         2         2       9s
+
+③Service nginx-serviceの確認
+$ kubectl describe -n svctest service/nginx-service
+Name:              nginx-service
+Namespace:         svctest
+Labels:            app=nginx
+Annotations:       <none>
+Selector:          app=nginx
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                192.168.200.125
+IPs:               192.168.200.125
+Port:              <unset>  8080/TCP
+TargetPort:        80/TCP
+Endpoints:         192.168.113.10:80,192.168.200.185:80
+Session Affinity:  None
+Events:            <none>
+
+4. ServiceとPodの接続確認
+$ curl 192.168.200.125:8080 -I
+HTTP/1.1 200 OK
+Server: nginx/1.14.2
+Date: Thu, 01 Dec 2022 00:38:22 GMT
+Content-Type: text/html
+Content-Length: 612
+Last-Modified: Tue, 04 Dec 2018 14:44:49 GMT
+Connection: keep-alive
+ETag: "5c0692e1-264"
+Accept-Ranges: bytes
+
+複数回実施
+
+$ kubectl logs -n svctest pod/nginx-deployment-9456bbbf9-9mlzw
+10.0.0.120 - - [01/Dec/2022:00:38:22 +0000] "HEAD / HTTP/1.1" 200 0 "-" "curl/7.29.0" "-"
+10.0.0.120 - - [01/Dec/2022:00:39:47 +0000] "HEAD / HTTP/1.1" 200 0 "-" "curl/7.29.0" "-"
+10.0.0.120 - - [01/Dec/2022:00:40:16 +0000] "HEAD / HTTP/1.1" 200 0 "-" "curl/7.29.0" "-"
+
+$ kubectl logs -n svctest pod/nginx-deployment-9456bbbf9-zwzqz
+10.0.0.120 - - [01/Dec/2022:00:40:54 +0000] "HEAD / HTTP/1.1" 200 0 "-" "curl/7.29.0" "-"
+
+5. Podの自動回復とServiceの連携確認
+①Podの削除
+$ kubectl get -n svctest pod
+NAME                               READY   STATUS    RESTARTS   AGE
+nginx-deployment-9456bbbf9-9mlzw   1/1     Running   0          5m35s
+nginx-deployment-9456bbbf9-zwzqz   1/1     Running   0          5m35s
+
+$ kubectl delete -n svctest pod/nginx-deployment-9456bbbf9-9mlzw
+pod "nginx-deployment-9456bbbf9-9mlzw" deleted
+
+$ kubectl get -n svctest pod
+NAME                               READY   STATUS    RESTARTS   AGE
+nginx-deployment-9456bbbf9-hq62r   1/1     Running   0          51s
+nginx-deployment-9456bbbf9-zwzqz   1/1     Running   0          13m
+
+③Service nginx-serviceの確認
+$ kubectl describe -n svctest service/nginx-service
+Name:              nginx-service
+Namespace:         svctest
+Labels:            app=nginx
+Annotations:       <none>
+Selector:          app=nginx
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                192.168.200.125
+IPs:               192.168.200.125
+Port:              <unset>  8080/TCP
+TargetPort:        80/TCP
+Endpoints:         192.168.113.10:80,192.168.200.190:80
+Session Affinity:  None
+Events:            <none>
+
+6. ServiceとPodの接続確認
+$ curl 192.168.200.125:8080 -I
+HTTP/1.1 200 OK
+Server: nginx/1.14.2
+Date: Thu, 01 Dec 2022 00:52:12 GMT
+Content-Type: text/html
+Content-Length: 612
+Last-Modified: Tue, 04 Dec 2018 14:44:49 GMT
+Connection: keep-alive
+ETag: "5c0692e1-264"
+Accept-Ranges: bytes
+
+$ kubectl logs -n svctest pod/nginx-deployment-9456bbbf9-hq62r
+10.0.0.120 - - [01/Dec/2022:00:52:12 +0000] "HEAD / HTTP/1.1" 200 0 "-" "curl/7.29.0" "-"
+
+$ kubectl logs -n svctest pod/nginx-deployment-9456bbbf9-zwzqz
+10.0.0.120 - - [01/Dec/2022:00:40:54 +0000] "HEAD / HTTP/1.1" 200 0 "-" "curl/7.29.0" "-"
+
