@@ -1,0 +1,98 @@
+Vault でシークレットを設定
+
+kubectl -n vault get pods
+
+vault-0 ポッドでインタラクティブ シェル セッションを開始します。
+kubectl -n vault exec -it vault-0 -- /bin/sh
+
+path で kv-v2 シークレットを有効にしますinternal。
+vault secrets enable -path=internal kv-v2
+
+ユーザー名とパスワードを使用して、パス internal/database/config にシークレットを作成します。
+vault kv put internal/database/config username="db-readonly-username" password="db-secret-password"
+
+シークレットがパス internal/database/config で定義されていることを確認します。
+vault kv get internal/database/config
+
+vault-0 ポッドでインタラクティブ シェル セッションを開始します。
+kubectl exec -it vault-0 -- /bin/sh
+
+Kubernetes 認証方法を有効にします。
+vault auth enable kubernetes
+vault auth list
+
+Kubernetes API の場所を使用するように Kubernetes 認証方法を構成します。
+vault write auth/kubernetes/config \
+    kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443"
+
+パス internal/data/database/config でシークレットの読み取り機能を有効にする internal-app という名前のポリシーを書き出します。
+vault policy write internal-app - <<EOF
+path "internal/data/database/config" {
+  capabilities = ["read"]
+}
+EOF
+
+internal-app という名前の Kubernetes 認証ロールを作成します。名前空間webapp
+vault write auth/kubernetes/role/internal-app \
+    bound_service_account_names=internal-app \
+    bound_service_account_namespaces=webapp \
+    policies=internal-app \
+    ttl=24h
+
+Kubernetes サービス アカウントを定義する
+Vault Kubernetes 認証ロールは、名前空間webapp に internal-appという名前の Kubernetes サービス アカウントを定義しました。
+
+デフォルトの名前空間にあるすべてのサービス アカウントを取得します。
+kubectl -n webapp get serviceaccounts
+
+kubectl -n webapp create sa internal-app
+
+kubectl -n webapp get serviceaccounts
+
+cat > deployment-issues.yaml << EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: issues
+  labels:
+    app: issues
+spec:
+  selector:
+    matchLabels:
+      app: issues
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/role: 'internal-app'
+        vault.hashicorp.com/agent-inject-secret-database-config.txt: 'internal/data/database/config'
+        vault.hashicorp.com/agent-inject-template-database-config.txt: |
+          {{- with secret "internal/data/database/config" -}}
+          postgresql://{{ .Data.data.username }}:{{ .Data.data.password }}@postgres:5432/wizard
+          {{- end -}}
+      labels:
+        app: issues
+    spec:
+      serviceAccountName: internal-app
+      containers:
+        - name: issues
+          image: jweissig/app:0.0.1
+EOF
+
+
+kubectl -n webapp apply -f deployment-issues.yaml
+
+kubectl -n webapp get pods
+
+kubectl -n webapp logs \
+    $(kubectl -n webapp get pod -l app=issues -o jsonpath="{.items[0].metadata.name}") \
+    --container vault-agent-init
+
+kubectl -n webapp exec \
+    $(kubectl -n webapp get pod -l app=issues -o jsonpath="{.items[0].metadata.name}") \
+    --container issues -- cat /vault/secrets/database-config.txt
+
+
+
+
