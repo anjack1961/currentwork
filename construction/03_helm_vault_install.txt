@@ -1,0 +1,117 @@
+3. helmによるVault Raftのインストール
+
+kubectl get ns
+
+kubectl create ns vault
+
+kubectl get ns vault
+
+cat > storageclass-values.yml <<EOF
+server:
+  affinity: ""
+  dataStorage:
+    storageClass: local-storage
+  ha:
+    enabled: true
+    raft:
+      enabled: true
+EOF
+
+
+
+helm install vault hashicorp/vault -n vault --values values.yml
+
+kubectl -n vault get sc,pv,pvc
+
+kubectl -n vault get all
+
+kubectl -n vault get pods -o wide
+
+
+
+
+[anjack@30master const]$ kubectl get ns
+NAME               STATUS   AGE
+calico-apiserver   Active   10d
+calico-system      Active   10d
+default            Active   10d
+kube-node-lease    Active   10d
+kube-public        Active   10d
+kube-system        Active   10d
+tigera-operator    Active   10d
+[anjack@30master const]$ kubectl create ns vault
+namespace/vault created
+[anjack@30master const]$ kubectl get ns vault
+NAME    STATUS   AGE
+vault   Active   9s
+[anjack@30master const]$
+
+
+
+[anjack@30master const]$ helm install vault hashicorp/vault -n vault --values values.yml
+NAME: vault
+LAST DEPLOYED: Mon Dec 19 11:05:21 2022
+NAMESPACE: vault
+STATUS: deployed
+REVISION: 1
+NOTES:
+Thank you for installing HashiCorp Vault!
+
+Now that you have deployed Vault, you should look over the docs on using
+Vault with Kubernetes available here:
+
+https://www.vaultproject.io/docs/
+
+
+Your release is named vault. To learn more about the release, try:
+
+  $ helm status vault
+  $ helm get manifest vault
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault get sc,pv,pvc
+NAME                                        PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+storageclass.storage.k8s.io/local-storage   kubernetes.io/no-provisioner   Delete          WaitForFirstConsumer   false                  55m
+
+NAME                    CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM                STORAGECLASS    REASON   AGE
+persistentvolume/pv01   10Gi       RWO            Delete           Bound       vault/data-vault-0   local-storage            50m
+persistentvolume/pv02   10Gi       RWO            Delete           Bound       vault/data-vault-2   local-storage            50m
+persistentvolume/pv03   10Gi       RWO            Delete           Available                        local-storage            50m
+persistentvolume/pv04   10Gi       RWO            Delete           Bound       vault/data-vault-1   local-storage            50m
+
+NAME                                 STATUS   VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS    AGE
+persistentvolumeclaim/data-vault-0   Bound    pv01     10Gi       RWO            local-storage   17s
+persistentvolumeclaim/data-vault-1   Bound    pv04     10Gi       RWO            local-storage   14s
+persistentvolumeclaim/data-vault-2   Bound    pv02     10Gi       RWO            local-storage   13s
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault get all
+NAME                                        READY   STATUS    RESTARTS   AGE
+pod/vault-0                                 0/1     Running   0          28s
+pod/vault-1                                 0/1     Running   0          27s
+pod/vault-2                                 0/1     Running   0          26s
+pod/vault-agent-injector-59b9c84fd8-vdlrs   1/1     Running   0          31s
+
+NAME                               TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
+service/vault                      ClusterIP   10.109.40.192    <none>        8200/TCP,8201/TCP   32s
+service/vault-active               ClusterIP   10.106.124.150   <none>        8200/TCP,8201/TCP   32s
+service/vault-agent-injector-svc   ClusterIP   10.107.253.132   <none>        443/TCP             32s
+service/vault-internal             ClusterIP   None             <none>        8200/TCP,8201/TCP   32s
+service/vault-standby              ClusterIP   10.102.83.108    <none>        8200/TCP,8201/TCP   32s
+
+NAME                                   READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/vault-agent-injector   1/1     1            1           31s
+
+NAME                                              DESIRED   CURRENT   READY   AGE
+replicaset.apps/vault-agent-injector-59b9c84fd8   1         1         1       31s
+
+NAME                     READY   AGE
+statefulset.apps/vault   0/3     31s
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$
+
+
+
+
+

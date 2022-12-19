@@ -1,0 +1,187 @@
+4. Vault初期化
+1 つのキー共有と 1 つのキーしきい値で vault-0 を初期化します。
+kubectl -n vault exec vault-0 -- vault operator init \
+    -key-shares=1 \
+    -key-threshold=1 \
+    -format=json > cluster-keys.json
+
+cluster-keys.json にある unseal キーを表示します。
+jq -r ".unseal_keys_b64[]" cluster-keys.json
+
+VAULT_UNSEAL_KEY という名前の変数を作成して、Vault 開封キーを取得します。
+VAULT_UNSEAL_KEY=$(jq -r ".unseal_keys_b64[]" cluster-keys.json)
+
+kubectl -n vault get pods
+
+Vault-0 ポッドで実行されている Vault をアンシールします。
+kubectl -n vault exec vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
+
+kubectl -n vault get pods
+
+vault-1 ポッドを Raft クラスタに参加させます。
+kubectl -n vault exec -ti vault-1 -- vault operator raft join http://vault-0.vault-internal:8200
+
+vault-2 ポッドを Raft クラスタに参加させます。
+kubectl -n vault exec -ti vault-2 -- vault operator raft join http://vault-0.vault-internal:8200
+
+kubectl -n vault get pods
+
+上記の開封キーを使用して、vault-1 を開封します。
+kubectl -n vault exec -ti vault-1 -- vault operator unseal $VAULT_UNSEAL_KEY
+
+上記の開封キーを使用して、vault-2 を開封します。
+kubectl -n vault exec -ti vault-2 -- vault operator unseal $VAULT_UNSEAL_KEY
+
+kubectl -n vault get pods
+
+kubectl -n vault exec vault-0 -- vault status
+
+
+
+[anjack@30master const]$ kubectl -n vault exec vault-0 -- vault operator init \
+>     -key-shares=1 \
+>     -key-threshold=1 \
+>     -format=json > cluster-keys.json
+[anjack@30master const]$ cat cluster-keys.json
+{
+  "unseal_keys_b64": [
+    "D4QuFabKHtbg4XPgSv+ivyxCCMfzwgKS8iawhjHljjU="
+  ],
+  "unseal_keys_hex": [
+    "0f842e15a6ca1ed6e0e173e04affa2bf2c4208c7f3c20292f226b08631e58e35"
+  ],
+  "unseal_shares": 1,
+  "unseal_threshold": 1,
+  "recovery_keys_b64": [],
+  "recovery_keys_hex": [],
+  "recovery_keys_shares": 0,
+  "recovery_keys_threshold": 0,
+  "root_token": "hvs.JMCVF7eO4Oox8CZQX3FRM2pU"
+}
+[anjack@30master const]$
+
+
+[anjack@30master const]$ jq -r ".unseal_keys_b64[]" cluster-keys.json
+D4QuFabKHtbg4XPgSv+ivyxCCMfzwgKS8iawhjHljjU=
+[anjack@30master const]$ VAULT_UNSEAL_KEY=$(jq -r ".unseal_keys_b64[]" cluster-keys.json)
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+vault-0                                 0/1     Running   0          7m10s
+vault-1                                 0/1     Running   0          7m9s
+vault-2                                 0/1     Running   0          7m8s
+vault-agent-injector-59b9c84fd8-vdlrs   1/1     Running   0          7m13s
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault exec vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
+Key                     Value
+---                     -----
+Seal Type               shamir
+Initialized             true
+Sealed                  false
+Total Shares            1
+Threshold               1
+Version                 1.12.1
+Build Date              2022-10-27T12:32:05Z
+Storage Type            raft
+Cluster Name            vault-cluster-1431bb24
+Cluster ID              b7188213-00d7-4e8d-9668-04f85586f825
+HA Enabled              true
+HA Cluster              n/a
+HA Mode                 standby
+Active Node Address     <none>
+Raft Committed Index    31
+Raft Applied Index      31
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+vault-0                                 1/1     Running   0          7m39s
+vault-1                                 0/1     Running   0          7m38s
+vault-2                                 0/1     Running   0          7m37s
+vault-agent-injector-59b9c84fd8-vdlrs   1/1     Running   0          7m42s
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault exec -ti vault-1 -- vault operator raft join http://vault-0.vault-internal:8200
+Key       Value
+---       -----
+Joined    true
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault exec -ti vault-2 -- vault operator raft join http://vault-0.vault-internal:8200
+Key       Value
+---       -----
+Joined    true
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+vault-0                                 1/1     Running   0          14m
+vault-1                                 0/1     Running   0          14m
+vault-2                                 0/1     Running   0          14m
+vault-agent-injector-59b9c84fd8-vdlrs   1/1     Running   0          14m
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault exec -ti vault-1 -- vault operator unseal $VAULT_UNSEAL_KEY
+Key                Value
+---                -----
+Seal Type          shamir
+Initialized        true
+Sealed             true
+Total Shares       1
+Threshold          1
+Unseal Progress    0/1
+Unseal Nonce       n/a
+Version            1.12.1
+Build Date         2022-10-27T12:32:05Z
+Storage Type       raft
+HA Enabled         true
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault exec -ti vault-2 -- vault operator unseal $VAULT_UNSEAL_KEY
+Key                Value
+---                -----
+Seal Type          shamir
+Initialized        true
+Sealed             true
+Total Shares       1
+Threshold          1
+Unseal Progress    0/1
+Unseal Nonce       n/a
+Version            1.12.1
+Build Date         2022-10-27T12:32:05Z
+Storage Type       raft
+HA Enabled         true
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault get pods
+NAME                                    READY   STATUS    RESTARTS   AGE
+vault-0                                 1/1     Running   0          15m
+vault-1                                 1/1     Running   0          15m
+vault-2                                 1/1     Running   0          15m
+vault-agent-injector-59b9c84fd8-vdlrs   1/1     Running   0          15m
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault exec vault-0 -- vault status
+Key                     Value
+---                     -----
+Seal Type               shamir
+Initialized             true
+Sealed                  false
+Total Shares            1
+Threshold               1
+Version                 1.12.1
+Build Date              2022-10-27T12:32:05Z
+Storage Type            raft
+Cluster Name            vault-cluster-1431bb24
+Cluster ID              b7188213-00d7-4e8d-9668-04f85586f825
+HA Enabled              true
+HA Cluster              https://vault-0.vault-internal:8201
+HA Mode                 active
+Active Since            2022-12-19T02:12:53.775422168Z
+Raft Committed Index    42
+Raft Applied Index      42
+[anjack@30master const]$
+[anjack@30master const]$
+

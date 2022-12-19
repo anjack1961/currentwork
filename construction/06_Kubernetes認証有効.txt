@@ -1,0 +1,98 @@
+
+vault-0 ポッドでインタラクティブ シェル セッションを開始します。
+kubectl -n vault exec -it vault-0 -- /bin/sh
+
+Kubernetes 認証方法を有効にします。
+vault auth enable kubernetes
+vault auth list
+
+Kubernetes API の場所を使用するように Kubernetes 認証方法を構成します。
+vault write auth/kubernetes/config \
+    kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443"
+
+パス internal/data/database/config でシークレットの読み取り機能を有効にする internal-app という名前のポリシーを書き出します。
+vault policy write internal-app - <<EOF
+path "internal/data/database/config" {
+  capabilities = ["read"]
+}
+EOF
+
+名前空間webapp,internal-app という名前の Kubernetes 認証ロールを作成します。
+vault write auth/kubernetes/role/internal-app \
+    bound_service_account_names=internal-app \
+    bound_service_account_namespaces=webapp \
+    policies=internal-app \
+    ttl=24h
+
+
+
+[anjack@30master const]$ kubectl exec -it vault-0 -- /bin/sh
+Error from server (NotFound): pods "vault-0" not found
+[anjack@30master const]$ kubectl -n vault exec -it vault-0 -- /bin/sh
+/ $ vault auth list
+Path      Type     Accessor               Description                Version
+----      ----     --------               -----------                -------
+token/    token    auth_token_184e78ec    token based credentials    n/a
+/ $ vault auth enable kubernetes
+Success! Enabled kubernetes auth method at: kubernetes/
+/ $ vault auth list
+Path           Type          Accessor                    Description                Version
+----           ----          --------                    -----------                -------
+kubernetes/    kubernetes    auth_kubernetes_0c420049    n/a                        n/a
+token/         token         auth_token_184e78ec         token based credentials    n/a
+/ $
+/ $
+/ $ vault policy write internal-app - <<EOF
+> path "internal/data/database/config" {
+>   capabilities = ["read"]
+> }
+> EOF
+Success! Uploaded policy: internal-app
+/ $
+/ $
+/ $ vault policy write internal-app - <<EOF
+> path "internal/data/database/config" {
+>   capabilities = ["read"]
+> }
+> EOF
+Success! Uploaded policy: internal-app
+/ $
+/ $
+/ $ vault write auth/kubernetes/role/internal-app \
+>     bound_service_account_names=internal-app \
+>     bound_service_account_namespaces=webapp \
+>     policies=internal-app \
+>     ttl=24h
+Success! Data written to: auth/kubernetes/role/internal-app
+/ $
+/ $
+/ $ vault policy read internal-app
+path "internal/data/database/config" {
+  capabilities = ["read"]
+}
+/ $
+/ $ vault read auth/kubernetes/role/internal-app
+Key                                 Value
+---                                 -----
+alias_name_source                   serviceaccount_uid
+bound_service_account_names         [internal-app]
+bound_service_account_namespaces    [webapp]
+policies                            [internal-app]
+token_bound_cidrs                   []
+token_explicit_max_ttl              0s
+token_max_ttl                       0s
+token_no_default_policy             false
+token_num_uses                      0
+token_period                        0s
+token_policies                      [internal-app]
+token_ttl                           24h
+token_type                          default
+ttl                                 24h
+/ $
+/ $
+/ $ exit
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$
+
+

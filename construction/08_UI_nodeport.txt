@@ -1,0 +1,100 @@
+
+cat nodeport.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: vault
+    meta.helm.sh/release-namespace: vault
+  labels:
+    app.kubernetes.io/instance: vault
+    app.kubernetes.io/name: vault
+  name: vault-nodeport
+  namespace: vault
+spec:
+  ports:
+  - name: http
+    port: 8200
+    protocol: TCP
+    targetPort: 8200
+  - name: https-internal
+    port: 8201
+    protocol: TCP
+    targetPort: 8201
+  selector:
+    app.kubernetes.io/instance: vault
+    app.kubernetes.io/name: vault
+    component: server
+  sessionAffinity: None
+  type: NodePort
+
+kubectl -n vault get svc
+
+kubectl -n vault apply -f nodeport.yaml
+
+31265
+http://localhost:18200/ui/
+
+NG 31411
+https://localhost:18200/ui/
+
+
+
+[anjack@30master const]$ sed -i 7d nodeport.yaml
+[anjack@30master const]$ cat nodeport.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: vault
+    meta.helm.sh/release-namespace: vault
+  labels:
+    app.kubernetes.io/instance: vault
+    app.kubernetes.io/name: vault
+  name: vault-nodeport
+  namespace: vault
+spec:
+  ports:
+  - name: http
+    port: 8200
+    protocol: TCP
+    targetPort: 8200
+  - name: https-internal
+    port: 8201
+    protocol: TCP
+    targetPort: 8201
+  selector:
+    app.kubernetes.io/instance: vault
+    app.kubernetes.io/name: vault
+    component: server
+  sessionAffinity: None
+  type: NodePort
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault get svc
+NAME                       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
+vault                      ClusterIP   10.109.40.192    <none>        8200/TCP,8201/TCP   74m
+vault-active               ClusterIP   10.106.124.150   <none>        8200/TCP,8201/TCP   74m
+vault-agent-injector-svc   ClusterIP   10.107.253.132   <none>        443/TCP             74m
+vault-internal             ClusterIP   None             <none>        8200/TCP,8201/TCP   74m
+vault-standby              ClusterIP   10.102.83.108    <none>        8200/TCP,8201/TCP   74m
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault apply -f nodeport.yaml
+service/vault-nodeport created
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n vault get svc
+NAME                       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                         AGE
+vault                      ClusterIP   10.109.40.192    <none>        8200/TCP,8201/TCP               75m
+vault-active               ClusterIP   10.106.124.150   <none>        8200/TCP,8201/TCP               75m
+vault-agent-injector-svc   ClusterIP   10.107.253.132   <none>        443/TCP                         75m
+vault-internal             ClusterIP   None             <none>        8200/TCP,8201/TCP               75m
+vault-nodeport             NodePort    10.100.230.217   <none>        8200:31265/TCP,8201:31411/TCP   10s
+vault-standby              ClusterIP   10.102.83.108    <none>        8200/TCP,8201/TCP               75m
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$
+
+
+

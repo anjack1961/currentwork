@@ -1,0 +1,102 @@
+Vault でシークレットを設定
+
+kubectl -n vault get pods
+
+cluster-keys.json で見つかったルート トークンを表示します。
+jq -r ".root_token" cluster-keys.json
+
+
+vault-0 ポッドでインタラクティブ シェル セッションを開始します。
+kubectl -n vault exec -it vault-0 -- /bin/sh
+
+プロンプトが表示されたら、ルート トークンを使用してログインします。
+vault login
+
+internal path で kv-v2 シークレットを有効にします。
+vault secrets enable -path=internal kv-v2
+
+ユーザー名とパスワードを使用して、パス internal/database/config にシークレットを作成します。
+vault kv put internal/database/config username="db-readonly-username" password="db-secret-password"
+
+シークレットがパス internal/database/config で定義されていることを確認します。
+vault kv get internal/database/config
+
+
+
+
+[anjack@30master const]$ kubectl -n vault exec -it vault-0 -- /bin/sh
+/ $ vault secrets enable -path=internal kv-v2
+Error enabling: Error making API request.
+
+URL: POST http://127.0.0.1:8200/v1/sys/mounts/internal
+Code: 403. Errors:
+
+* permission denied
+/ $ exit
+command terminated with exit code 2
+[anjack@30master const]$
+[anjack@30master const]$ jq -r ".root_token" cluster-keys.json
+hvs.JMCVF7eO4Oox8CZQX3FRM2pU
+[anjack@30master const]$ kubectl -n vault exec -it vault-0 -- /bin/sh
+/ $ vault login
+Token (will be hidden):
+Success! You are now authenticated. The token information displayed below
+is already stored in the token helper. You do NOT need to run "vault login"
+again. Future Vault requests will automatically use this token.
+
+Key                  Value
+---                  -----
+token                hvs.JMCVF7eO4Oox8CZQX3FRM2pU
+token_accessor       SrWmz0CkTVPFEsVHlHDmxH5V
+token_duration       ∞
+token_renewable      false
+token_policies       ["root"]
+identity_policies    []
+policies             ["root"]
+/ $
+/ $
+/ $ vault secrets enable -path=internal kv-v2
+Success! Enabled the kv-v2 secrets engine at: internal/
+/ $
+/ $
+/ $ vault kv put internal/database/config username="db-readonly-username" password="db-secret-password"
+======== Secret Path ========
+internal/data/database/config
+
+======= Metadata =======
+Key                Value
+---                -----
+created_time       2022-12-19T02:26:20.935806799Z
+custom_metadata    <nil>
+deletion_time      n/a
+destroyed          false
+version            1
+/ $
+/ $
+/ $ vault kv get internal/database/config
+======== Secret Path ========
+internal/data/database/config
+
+======= Metadata =======
+Key                Value
+---                -----
+created_time       2022-12-19T02:26:20.935806799Z
+custom_metadata    <nil>
+deletion_time      n/a
+destroyed          false
+version            1
+
+====== Data ======
+Key         Value
+---         -----
+password    db-secret-password
+username    db-readonly-username
+/ $
+/ $
+/ $ exit
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$
+
+
+

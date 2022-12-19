@@ -1,0 +1,479 @@
+Kubernetes サービス アカウントを定義する
+Vault Kubernetes 認証ロールは、名前空間webapp に internal-appという名前の Kubernetes サービス アカウントを定義しました。
+
+名前空間webapp
+kubectl create ns webapp
+
+kubectl get ns webapp
+
+名前空間にあるすべてのサービス アカウントを取得します。
+kubectl -n webapp get serviceaccounts
+
+kubectl -n webapp create sa internal-app
+
+kubectl -n webapp get serviceaccounts
+
+
+vi deployment-issues.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: issues
+  labels:
+    app: issues
+spec:
+  selector:
+    matchLabels:
+      app: issues
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/role: 'internal-app'
+        vault.hashicorp.com/agent-inject-secret-database-config.txt: 'internal/data/database/config'
+        vault.hashicorp.com/agent-inject-template-database-config.txt: |
+          {{- with secret "internal/data/database/config" -}}
+          postgresql://{{ .Data.data.username }}:{{ .Data.data.password }}@postgres:5432/wizard
+          {{- end -}}
+      labels:
+        app: issues
+    spec:
+      serviceAccountName: internal-app
+      containers:
+        - name: issues
+          image: jweissig/app:0.0.1
+
+kubectl -n webapp apply --filename deployment-issues.yaml
+
+kubectl -n webapp get pods
+
+kubectl -n webapp logs \
+    $(kubectl -n webapp get pod -l app=issues -o jsonpath="{.items[0].metadata.name}") \
+    --container vault-agent-init
+
+kubectl -n webapp exec \
+    $(kubectl -n webapp get pod -l app=issues -o jsonpath="{.items[0].metadata.name}") \
+    --container issues -- cat /vault/secrets/database-config.txt
+
+
+
+
+[anjack@30master const]$ ls
+cluster-keys.json  local-strage.yaml  pv_test  values.yml
+[anjack@30master const]$ ls ~/vault/sidecar/
+deployment-issues.yaml
+[anjack@30master const]$ cp ~/vault/sidecar/deployment-issues.yaml .
+[anjack@30master const]$ ls
+cluster-keys.json  deployment-issues.yaml  local-strage.yaml  pv_test  values.yml
+[anjack@30master const]$ cat deployment-issues.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: issues
+  labels:
+    app: issues
+spec:
+  selector:
+    matchLabels:
+      app: issues
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/role: 'internal-app'
+        vault.hashicorp.com/agent-inject-secret-database-config.txt: 'internal/data/database/config'
+        vault.hashicorp.com/agent-inject-template-database-config.txt: |
+          {{- with secret "internal/data/database/config" -}}
+          postgresql://{{ .Data.data.username }}:{{ .Data.data.password }}@postgres:5432/wizard
+          {{- end -}}
+      labels:
+        app: issues
+    spec:
+      serviceAccountName: internal-app
+      containers:
+        - name: issues
+          image: jweissig/app:0.0.1
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl create ns webapp
+namespace/webapp created
+[anjack@30master const]$ kubectl get ns webapp
+NAME     STATUS   AGE
+webapp   Active   44s
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n webapp get serviceaccounts
+NAME      SECRETS   AGE
+default   0         67s
+[anjack@30master const]$ kubectl -n webapp create sa internal-app
+serviceaccount/internal-app created
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n webapp get serviceaccounts
+NAME           SECRETS   AGE
+default        0         2m6s
+internal-app   0         48s
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n webapp apply --filename deployment-issues.yaml
+deployment.apps/issues created
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n webapp get pods
+NAME                      READY   STATUS     RESTARTS   AGE
+issues-544fcf6889-pdxk6   0/2     Init:0/1   0          11s
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n webapp get pods --watch
+NAME                      READY   STATUS     RESTARTS   AGE
+issues-544fcf6889-pdxk6   0/2     Init:0/1   0          23s
+
+
+^C[anjack@30master const]$ kubectl -n webapp describe pod/issues-544fcf6889-pdxk6
+Name:             issues-544fcf6889-pdxk6
+Namespace:        webapp
+Priority:         0
+Service Account:  internal-app
+Node:             30node2.aandby.ga/192.168.122.32
+Start Time:       Mon, 19 Dec 2022 11:57:00 +0900
+Labels:           app=issues
+                  pod-template-hash=544fcf6889
+Annotations:      cni.projectcalico.org/containerID: 1edb8154ce19025cb3e2344d4b8cd7150ea781eb2b40f7275cf945597a8a0cbb
+                  cni.projectcalico.org/podIP: 10.10.26.205/32
+                  cni.projectcalico.org/podIPs: 10.10.26.205/32
+                  vault.hashicorp.com/agent-inject: true
+                  vault.hashicorp.com/agent-inject-secret-database-config.txt: internal/data/database/config
+                  vault.hashicorp.com/agent-inject-status: injected
+                  vault.hashicorp.com/agent-inject-template-database-config.txt:
+                    {{- with secret "internal/data/database/config" -}}
+                    postgresql://{{ .Data.data.username }}:{{ .Data.data.password }}@postgres:5432/wizard
+                    {{- end -}}
+                  vault.hashicorp.com/role: internal-app
+Status:           Pending
+IP:               10.10.26.205
+IPs:
+  IP:           10.10.26.205
+Controlled By:  ReplicaSet/issues-544fcf6889
+Init Containers:
+  vault-agent-init:
+    Container ID:  containerd://0ce2203b90c7be7ac5076ecbd34672a8f1de073e4d349f5b8cd5050903cff914
+    Image:         hashicorp/vault:1.12.1
+    Image ID:      docker.io/hashicorp/vault@sha256:8de4d5f31b38225d952070d48c346a4029677dae05d11092142e921e373499c2
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      /bin/sh
+      -ec
+    Args:
+      echo ${VAULT_CONFIG?} | base64 -d > /home/vault/config.json && vault agent -config=/home/vault/config.json
+    State:          Running
+      Started:      Mon, 19 Dec 2022 11:57:02 +0900
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  128Mi
+    Requests:
+      cpu:     250m
+      memory:  64Mi
+    Environment:
+      VAULT_LOG_LEVEL:   info
+      VAULT_LOG_FORMAT:  standard
+      VAULT_CONFIG:      eyJhdXRvX2F1dGgiOnsibWV0aG9kIjp7InR5cGUiOiJrdWJlcm5ldGVzIiwibW91bnRfcGF0aCI6ImF1dGgva3ViZXJuZXRlcyIsImNvbmZpZyI6eyJyb2xlIjoiaW50ZXJuYWwtYXBwIiwidG9rZW5fcGF0aCI6Ii92YXIvcnVuL3NlY3JldHMva3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC90b2tlbiJ9fSwic2luayI6W3sidHlwZSI6ImZpbGUiLCJjb25maWciOnsicGF0aCI6Ii9ob21lL3ZhdWx0Ly52YXVsdC10b2tlbiJ9fV19LCJleGl0X2FmdGVyX2F1dGgiOnRydWUsInBpZF9maWxlIjoiL2hvbWUvdmF1bHQvLnBpZCIsInZhdWx0Ijp7ImFkZHJlc3MiOiJodHRwOi8vdmF1bHQudmF1bHQuc3ZjOjgyMDAifSwidGVtcGxhdGUiOlt7ImRlc3RpbmF0aW9uIjoiL3ZhdWx0L3NlY3JldHMvZGF0YWJhc2UtY29uZmlnLnR4dCIsImNvbnRlbnRzIjoie3stIHdpdGggc2VjcmV0IFwiaW50ZXJuYWwvZGF0YS9kYXRhYmFzZS9jb25maWdcIiAtfX1cbnBvc3RncmVzcWw6Ly97eyAuRGF0YS5kYXRhLnVzZXJuYW1lIH19Ont7IC5EYXRhLmRhdGEucGFzc3dvcmQgfX1AcG9zdGdyZXM6NTQzMi93aXphcmRcbnt7LSBlbmQgLX19XG4iLCJsZWZ0X2RlbGltaXRlciI6Int7IiwicmlnaHRfZGVsaW1pdGVyIjoifX0ifV0sInRlbXBsYXRlX2NvbmZpZyI6eyJleGl0X29uX3JldHJ5X2ZhaWx1cmUiOnRydWV9fQ==
+    Mounts:
+      /home/vault from home-init (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-xpvd7 (ro)
+      /vault/secrets from vault-secrets (rw)
+Containers:
+  issues:
+    Container ID:
+    Image:          jweissig/app:0.0.1
+    Image ID:
+    Port:           <none>
+    Host Port:      <none>
+    State:          Waiting
+      Reason:       PodInitializing
+    Ready:          False
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-xpvd7 (ro)
+      /vault/secrets from vault-secrets (rw)
+  vault-agent:
+    Container ID:
+    Image:         hashicorp/vault:1.12.1
+    Image ID:
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      /bin/sh
+      -ec
+    Args:
+      echo ${VAULT_CONFIG?} | base64 -d > /home/vault/config.json && vault agent -config=/home/vault/config.json
+    State:          Waiting
+      Reason:       PodInitializing
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  128Mi
+    Requests:
+      cpu:     250m
+      memory:  64Mi
+    Environment:
+      VAULT_LOG_LEVEL:   info
+      VAULT_LOG_FORMAT:  standard
+      VAULT_CONFIG:      eyJhdXRvX2F1dGgiOnsibWV0aG9kIjp7InR5cGUiOiJrdWJlcm5ldGVzIiwibW91bnRfcGF0aCI6ImF1dGgva3ViZXJuZXRlcyIsImNvbmZpZyI6eyJyb2xlIjoiaW50ZXJuYWwtYXBwIiwidG9rZW5fcGF0aCI6Ii92YXIvcnVuL3NlY3JldHMva3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC90b2tlbiJ9fSwic2luayI6W3sidHlwZSI6ImZpbGUiLCJjb25maWciOnsicGF0aCI6Ii9ob21lL3ZhdWx0Ly52YXVsdC10b2tlbiJ9fV19LCJleGl0X2FmdGVyX2F1dGgiOmZhbHNlLCJwaWRfZmlsZSI6Ii9ob21lL3ZhdWx0Ly5waWQiLCJ2YXVsdCI6eyJhZGRyZXNzIjoiaHR0cDovL3ZhdWx0LnZhdWx0LnN2Yzo4MjAwIn0sInRlbXBsYXRlIjpbeyJkZXN0aW5hdGlvbiI6Ii92YXVsdC9zZWNyZXRzL2RhdGFiYXNlLWNvbmZpZy50eHQiLCJjb250ZW50cyI6Int7LSB3aXRoIHNlY3JldCBcImludGVybmFsL2RhdGEvZGF0YWJhc2UvY29uZmlnXCIgLX19XG5wb3N0Z3Jlc3FsOi8ve3sgLkRhdGEuZGF0YS51c2VybmFtZSB9fTp7eyAuRGF0YS5kYXRhLnBhc3N3b3JkIH19QHBvc3RncmVzOjU0MzIvd2l6YXJkXG57ey0gZW5kIC19fVxuIiwibGVmdF9kZWxpbWl0ZXIiOiJ7eyIsInJpZ2h0X2RlbGltaXRlciI6In19In1dLCJ0ZW1wbGF0ZV9jb25maWciOnsiZXhpdF9vbl9yZXRyeV9mYWlsdXJlIjp0cnVlfX0=
+    Mounts:
+      /home/vault from home-sidecar (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-xpvd7 (ro)
+      /vault/secrets from vault-secrets (rw)
+Conditions:
+  Type              Status
+  Initialized       False
+  Ready             False
+  ContainersReady   False
+  PodScheduled      True
+Volumes:
+  kube-api-access-xpvd7:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+  home-init:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     Memory
+    SizeLimit:  <unset>
+  home-sidecar:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     Memory
+    SizeLimit:  <unset>
+  vault-secrets:
+    Type:        EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:      Memory
+    SizeLimit:   <unset>
+QoS Class:       Burstable
+Node-Selectors:  <none>
+Tolerations:     node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                 node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age    From               Message
+  ----    ------     ----   ----               -------
+  Normal  Scheduled  4m30s  default-scheduler  Successfully assigned webapp/issues-544fcf6889-pdxk6 to 30node2.aandby.ga
+  Normal  Pulled     4m28s  kubelet            Container image "hashicorp/vault:1.12.1" already present on machine
+  Normal  Created    4m28s  kubelet            Created container vault-agent-init
+  Normal  Started    4m28s  kubelet            Started container vault-agent-init
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n webapp get pods --watch
+NAME                      READY   STATUS     RESTARTS   AGE
+issues-544fcf6889-pdxk6   0/2     Init:0/1   0          4m43s
+
+
+^C[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n webapp logs \
+>     $(kubectl -n webapp get pod -l app=issues -o jsonpath="{.items[0].metadata.name}") \
+>     --container vault-agent-init
+==> Vault agent started! Log data will stream in below:
+
+==> Vault agent configuration:
+
+                     Cgo: disabled
+               Log Level: info
+                 Version: Vault v1.12.1, built 2022-10-27T12:32:05Z
+             Version Sha: e34f8a14fb7a88af4640b09f3ddbb5646b946d9c
+
+2022-12-19T02:57:02.735Z [INFO]  sink.file: creating file sink
+2022-12-19T02:57:02.735Z [INFO]  sink.file: file sink configured: path=/home/vault/.vault-token mode=-rw-r-----
+2022-12-19T02:57:02.736Z [INFO]  template.server: starting template server
+2022-12-19T02:57:02.736Z [INFO]  sink.server: starting sink server
+2022-12-19T02:57:02.736Z [INFO] (runner) creating new runner (dry: false, once: false)
+2022-12-19T02:57:02.736Z [INFO]  auth.handler: starting auth handler
+2022-12-19T02:57:02.736Z [INFO]  auth.handler: authenticating
+2022-12-19T02:57:02.736Z [INFO] (runner) creating watcher
+2022-12-19T02:57:02.739Z [ERROR] auth.handler: error authenticating:
+  error=
+  | Error making API request.
+  |
+  | URL: PUT http://vault.vault.svc:8200/v1/auth/kubernetes/login
+  | Code: 500. Errors:
+  |
+  | * could not load backend configuration
+   backoff=1s
+2022-12-19T02:57:03.740Z [INFO]  auth.handler: authenticating
+2022-12-19T02:57:03.764Z [ERROR] auth.handler: error authenticating:
+  error=
+  | Error making API request.
+  |
+  | URL: PUT http://vault.vault.svc:8200/v1/auth/kubernetes/login
+  | Code: 500. Errors:
+  |
+  | * could not load backend configuration
+   backoff=1.53s
+2022-12-19T02:57:05.296Z [INFO]  auth.handler: authenticating
+2022-12-19T02:57:05.309Z [ERROR] auth.handler: error authenticating:
+  error=
+  | Error making API request.
+  |
+  | URL: PUT http://vault.vault.svc:8200/v1/auth/kubernetes/login
+  | Code: 500. Errors:
+  |
+  | * could not load backend configuration
+   backoff=3.04s
+2022-12-19T02:57:08.358Z [INFO]  auth.handler: authenticating
+2022-12-19T02:57:08.367Z [ERROR] auth.handler: error authenticating:
+  error=
+  | Error making API request.
+  |
+  | URL: PUT http://vault.vault.svc:8200/v1/auth/kubernetes/login
+  | Code: 500. Errors:
+  |
+  | * could not load backend configuration
+   backoff=5.89s
+2022-12-19T02:57:14.258Z [INFO]  auth.handler: authenticating
+2022-12-19T02:57:14.270Z [ERROR] auth.handler: error authenticating:
+  error=
+  | Error making API request.
+  |
+  | URL: PUT http://vault.vault.svc:8200/v1/auth/kubernetes/login
+  | Code: 500. Errors:
+  |
+  | * could not load backend configuration
+   backoff=9.03s
+2022-12-19T02:57:23.308Z [INFO]  auth.handler: authenticating
+2022-12-19T02:57:23.320Z [ERROR] auth.handler: error authenticating:
+  error=
+  | Error making API request.
+  |
+  | URL: PUT http://vault.vault.svc:8200/v1/auth/kubernetes/login
+  | Code: 500. Errors:
+  |
+  | * could not load backend configuration
+   backoff=15.5s
+2022-12-19T02:57:38.823Z [INFO]  auth.handler: authenticating
+2022-12-19T02:57:38.828Z [ERROR] auth.handler: error authenticating:
+  error=
+  | Error making API request.
+  |
+  | URL: PUT http://vault.vault.svc:8200/v1/auth/kubernetes/login
+  | Code: 500. Errors:
+  |
+  | * could not load backend configuration
+   backoff=25.77s
+2022-12-19T02:58:04.605Z [INFO]  auth.handler: authenticating
+2022-12-19T02:58:04.611Z [ERROR] auth.handler: error authenticating:
+  error=
+  | Error making API request.
+  |
+  | URL: PUT http://vault.vault.svc:8200/v1/auth/kubernetes/login
+  | Code: 500. Errors:
+  |
+  | * could not load backend configuration
+   backoff=50.07s
+2022-12-19T02:58:54.681Z [INFO]  auth.handler: authenticating
+2022-12-19T02:58:54.684Z [ERROR] auth.handler: error authenticating:
+  error=
+  | Error making API request.
+  |
+  | URL: PUT http://vault.vault.svc:8200/v1/auth/kubernetes/login
+  | Code: 500. Errors:
+  |
+  | * could not load backend configuration
+   backoff=1m27.32s
+2022-12-19T03:00:22.009Z [INFO]  auth.handler: authenticating
+2022-12-19T03:00:22.022Z [ERROR] auth.handler: error authenticating:
+  error=
+  | Error making API request.
+  |
+  | URL: PUT http://vault.vault.svc:8200/v1/auth/kubernetes/login
+  | Code: 500. Errors:
+  |
+  | * could not load backend configuration
+   backoff=2m47.16s
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n webapp delete --filename deployment-issues.yaml
+deployment.apps "issues" deleted
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl exec -it vault-0 -- /bin/sh
+Error from server (NotFound): pods "vault-0" not found
+[anjack@30master const]$ kubectl -n vault exec -it vault-0 -- /bin/sh
+/ $ vault write auth/kubernetes/config \
+>     kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443"
+Success! Data written to: auth/kubernetes/config
+/ $
+/ $ vault read auth/kubernetes/config
+Key                       Value
+---                       -----
+disable_iss_validation    true
+disable_local_ca_jwt      false
+issuer                    n/a
+kubernetes_ca_cert        n/a
+kubernetes_host           https://10.96.0.1:443
+pem_keys                  []
+/ $
+/ $
+/ $ exit
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n webapp apply --filename deployment-issues.yaml
+deployment.apps/issues created
+[anjack@30master const]$ kubectl -n webapp get pods --watch
+NAME                      READY   STATUS    RESTARTS   AGE
+issues-544fcf6889-7vl7d   2/2     Running   0          14s
+
+^C[anjack@30master const]$ kubectl -n webapp logs \
+>     $(kubectl -n webapp get pod -l app=issues -o jsonpath="{.items[0].metadata.name}") \
+>     --container vault-agent-init
+==> Vault agent started! Log data will stream in below:
+
+==> Vault agent configuration:
+
+                     Cgo: disabled
+               Log Level: info
+                 Version: Vault v1.12.1, built 2022-10-27T12:32:05Z
+             Version Sha: e34f8a14fb7a88af4640b09f3ddbb5646b946d9c
+
+2022-12-19T03:07:54.254Z [INFO]  sink.file: creating file sink
+2022-12-19T03:07:54.254Z [INFO]  sink.file: file sink configured: path=/home/vault/.vault-token mode=-rw-r-----
+2022-12-19T03:07:54.254Z [INFO]  template.server: starting template server
+2022-12-19T03:07:54.254Z [INFO] (runner) creating new runner (dry: false, once: false)
+2022-12-19T03:07:54.255Z [INFO] (runner) creating watcher
+2022-12-19T03:07:54.255Z [INFO]  auth.handler: starting auth handler
+2022-12-19T03:07:54.255Z [INFO]  auth.handler: authenticating
+2022-12-19T03:07:54.255Z [INFO]  sink.server: starting sink server
+2022-12-19T03:07:55.484Z [INFO]  auth.handler: authentication successful, sending token to sinks
+2022-12-19T03:07:55.485Z [INFO]  auth.handler: starting renewal process
+2022-12-19T03:07:55.485Z [INFO]  sink.file: token written: path=/home/vault/.vault-token
+2022-12-19T03:07:55.485Z [INFO]  sink.server: sink server stopped
+2022-12-19T03:07:55.485Z [INFO]  sinks finished, exiting
+2022-12-19T03:07:55.485Z [INFO]  template.server: template server received new token
+2022-12-19T03:07:55.485Z [INFO] (runner) stopping
+2022-12-19T03:07:55.485Z [INFO] (runner) creating new runner (dry: false, once: false)
+2022-12-19T03:07:55.486Z [INFO] (runner) creating watcher
+2022-12-19T03:07:55.486Z [INFO] (runner) starting
+2022-12-19T03:07:55.506Z [INFO] (runner) rendered "(dynamic)" => "/vault/secrets/database-config.txt"
+2022-12-19T03:07:55.506Z [INFO] (runner) stopping
+2022-12-19T03:07:55.506Z [INFO]  template.server: template server stopped
+2022-12-19T03:07:55.506Z [INFO] (runner) received finish
+2022-12-19T03:07:55.506Z [INFO]  auth.handler: shutdown triggered, stopping lifetime watcher
+2022-12-19T03:07:55.506Z [INFO]  auth.handler: auth handler stopped
+[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$ kubectl -n webapp exec \
+>     $(kubectl -n webapp get pod -l app=issues -o jsonpath="{.items[0].metadata.name}") \
+>     --container issues -- cat /vault/secrets/database-config.txt
+postgresql://db-readonly-username:db-secret-password@postgres:5432/wizard[anjack@30master const]$
+[anjack@30master const]$
+[anjack@30master const]$
+
+
+
+
+

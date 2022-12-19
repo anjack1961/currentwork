@@ -1,0 +1,33 @@
+
+kubectl get sc
+
+cat local-strage.yaml
+
+kubectl create -f local-strage.yaml
+
+kubectl get sc
+
+
+[anjack@30master const]$ pwd
+/home/anjack/const
+[anjack@30master const]$ ls
+local-strage.yaml  pv_test  storageClass-values.yml
+
+[anjack@30master const]$ kubectl get sc
+No resources found
+
+[anjack@30master const]$ cat local-strage.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+[anjack@30master const]$ kubectl create -f local-strage.yaml
+storageclass.storage.k8s.io/local-storage created
+
+[anjack@30master const]$ kubectl get sc
+NAME            PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+local-storage   kubernetes.io/no-provisioner   Delete          WaitForFirstConsumer   false                  50s
+
