@@ -1,0 +1,141 @@
+
+
+vault-0 ポッドでインタラクティブ シェル セッションを開始します。
+kubectl -n vault exec -it vault-1 -- /bin/sh
+
+プロンプトが表示されたら、ルート トークンを使用してログインします。
+vault login
+
+
+●シークレットエンジン有効化
+SecretEngin: kv-v2
+SecretEnginPath: enginpath
+
+internal path で kv-v2 シークレットを有効にします。
+vault secrets enable -path=enginpath kv-v2
+
+●シークレット登録
+SecretEngin: kv-v2
+SecretEnginPath: enginpath
+SecretPath: enginpath/group01/user01
+key1: user01
+key2: user01password
+
+シークレットを作成します。
+vault kv put enginpath/group01/user01 key1="user01" key2="user01password"
+
+シークレットが定義されていることを確認します。
+vault kv get enginpath/group01/user01
+
+
+●ポリシー登録
+Policyname: read_user01
+SecretAccessPath: enginpath/data/group01/user01
+capabilities: read
+
+ポリシーを書き出します。
+vault policy write read_user01 - <<EOF
+path "enginpath/data/group01/user01" {
+  capabilities = ["read"]
+}
+EOF
+
+
+●Kubernetes認証有効化
+Auth: kubernetes
+
+Kubernetes 認証方法を有効にします。
+vault auth enable kubernetes
+vault auth list
+
+Kubernetes API の場所を使用するように Kubernetes 認証方法を構成します。
+vault write auth/kubernetes/config \
+    kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443"
+
+/ $ vault read auth/kubernetes/config
+Key                       Value
+---                       -----
+disable_iss_validation    true
+disable_local_ca_jwt      false
+issuer                    n/a
+kubernetes_ca_cert        n/a
+kubernetes_host           https://10.96.0.1:443
+pem_keys                  []
+
+●Kubernetes認証ロール作成
+KubernetesRoleDir: auth/kubernetes/role
+Rolename: k8srole
+kubernetes名前空間: vaultspace
+ServiceAccount: vaultuser
+Policyname: read_user01
+Ttl: 24h
+
+Kubernetes 認証ロールを作成します。
+vault write auth/kubernetes/role/k8srole \
+    bound_service_account_namespaces=vaultspace \
+    bound_service_account_names=vaultuser \
+    policies=read_user01 \
+    ttl=24h
+
+
+●Sidecar
+annotations:
+injectorの有効化: vault.hashicorp.com/agent-inject: 'true'
+role指定: vault.hashicorp.com/role: 'k8srole'
+データ記述先: database-test.txt : /vault/secrets/database-test.txt
+SecretPath: enginpath/group01/user01
+SecretAccessPath: 'enginpath/data/group01/user01'
+テンプレート記述: 
+       vault.hashicorp.com/agent-inject-template-database-test.txt: |
+          {{- with secret "internal/data/database/config" -}}
+          postgresql://{{ .Data.data.key1 }}:{{ .Data.data.key2 }}@postgres:5432/wizard
+         {{- end -}}
+
+
+
+kubernetes-issues.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: issues
+  namespace: vaultspace
+  labels:
+    app: issues
+spec:
+  selector:
+    matchLabels:
+      app: issues
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/role: 'k8srole'
+        vault.hashicorp.com/agent-inject-secret-database-test.txt: 'enginpath/data/group01/user01'
+        vault.hashicorp.com/agent-inject-template-database-test.txt: |
+          {{- with secret "enginpath/data/group01/user01" -}}
+          postgresql://{{ .Data.data.key1 }}:{{ .Data.data.key2 }}@postgres:5432/wizard
+          {{- end -}}
+      labels:
+        app: issues
+    spec:
+      serviceAccountName: vaultuser
+      containers:
+        - name: issues
+          image: jweissig/app:0.0.1
+
+
+kubectl create ns vaultspace
+
+kubectl -n vaultspace create sa vaultuser
+
+
+kubectl -n vaultspace exec \
+    $(kubectl -n vaultspace get pod -l app=issues -o jsonpath="{.items[0].metadata.name}") \
+    --container issues -- cat /vault/secrets/database-test.txt
+
+
+
+
+
+
